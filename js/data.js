@@ -70,8 +70,8 @@ export const NASA_ARTIFACTS = [
         credit: 'NASA SVS 4720 / LROC'
       }
     ],
-    sourceTitle: 'NASA — Apollo 11 Mission & Lunar Laser Ranging',
-    sourceUrl: 'https://www.nasa.gov/mission/apollo-11/',
+    sourceTitle: 'NASA NSSDCA — Apollo 11 Lunar Module (1969-059C)',
+    sourceUrl: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C',
     story: [
       'In July 1969, NASA sent the Apollo 11 mission to the Moon. The goal was to land people on the Moon for the first time. The Lunar Module, called Eagle, was the spacecraft that took two astronauts, Neil Armstrong and Buzz Aldrin, down to the Moon. A third astronaut, Michael Collins, stayed in another spacecraft orbiting the Moon.',
       'Eagle landed on 20 July 1969 in an area called the Sea of Tranquility. After landing, Neil Armstrong and Buzz Aldrin stepped out onto the Moon’s surface and set up scientific experiments (EASEP) right beside the lander.',
@@ -188,8 +188,8 @@ export const NASA_ARTIFACTS = [
         credit: 'NASA / JPL / PIA13965'
       }
     ],
-    sourceTitle: 'NASA — Apollo 15 Mission',
-    sourceUrl: 'https://www.nasa.gov/mission/apollo-15/',
+    sourceTitle: 'NASA NSSDCA — Apollo 15 Lunar Module / Falcon (1971-063C)',
+    sourceUrl: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C',
     story: [
       'In July 1971, NASA sent the Apollo 15 mission to the Moon. The Lunar Module, called Falcon, carried two astronauts, David Scott and James Irwin, down to the Moon. A third astronaut, Alfred Worden, stayed in another spacecraft orbiting the Moon.',
       'Falcon landed on 30 July 1971 in an area called Mare Imbrium, near the Apennine Mountains. This mission was special because it was the first time astronauts used a vehicle called the Lunar Roving Vehicle (LRV), or Moon rover. It allowed them to travel much further across the Moon and explore places that were too far away to reach on foot.',
@@ -549,8 +549,8 @@ export const NASA_ARTIFACTS = [
         credit: 'NASA / JPL-Caltech'
       }
     ],
-    sourceTitle: 'NASA Science — Mars Exploration Rover Opportunity',
-    sourceUrl: 'https://science.nasa.gov/mission/mer-opportunity/',
+    sourceTitle: 'NASA Science — Mars Exploration Rovers: Spirit and Opportunity',
+    sourceUrl: 'https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/',
     story: [
       'In 2003, NASA launched two nearly identical robotic explorers called Spirit and Opportunity to search for evidence that liquid water had once existed on Mars. Spirit landed in Gusev Crater on January 3, 2004, and Opportunity followed on January 24/25, 2004 on the opposite side of Mars in Meridiani Planum.',
       'Originally, the rovers were designed to operate for only 90 Martian days (sols). However, both robots performed far beyond expectations, examining rocks and soil and sending thousands of scientific observations back to Earth.',
@@ -1107,21 +1107,21 @@ export const NASA_RESOURCES = [
   },
   {
     category: 'Moon Missions & Surface Hardware Imagery',
-    id: 'NASA Apollo / LRO / CLPS Archives',
-    title: 'Apollo 11 (as11-40-5948), Surveyor 3 & Apollo 12 (AS12-48-7133), Apollo 14, Apollo 15, Apollo 16, Apollo 17, Ranger 7, Surveyor 1, GRAIL, LADEE, LCROSS (SVS 10686), Odysseus & Blue Ghost M1',
-    credits: 'NASA Johnson Space Center (JSC), NASA GSFC Scientific Visualization Studio, Lunar Reconnaissance Orbiter Camera (LROC / ASU), and NASA CLPS / Firefly Aerospace.',
+    id: 'NASA Apollo / NSSDCA / LRO / CLPS',
+    title: 'Apollo 11 (1969-059C), Apollo 12, Apollo 14, Apollo 15 (1971-063C), Apollo 16, Apollo 17, Ranger 7, Surveyor 1, GRAIL, LADEE, LCROSS (SVS 10686), Odysseus & Blue Ghost M1',
+    credits: 'NASA NSSDCA Master Catalog, NASA Johnson Space Center (JSC), NASA GSFC Scientific Visualization Studio, Lunar Reconnaissance Orbiter Camera (LROC / ASU), and NASA CLPS / Firefly Aerospace.',
     localFile: 'assets/nasa/missions/ (13 Moon mission images)',
-    url: 'https://science.nasa.gov/moon/',
-    directUrl: 'https://science.nasa.gov/mission/apollo/lunar-laser-ranging/'
+    url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C',
+    directUrl: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C'
   },
   {
     category: 'Mars Exploration Program & Lander/Rover Imagery',
     id: 'NASA Mars Exploration Program',
-    title: 'Viking 1 Lander (PIA00381), Mars Pathfinder & Sojourner (PIA01122), Opportunity MER-B (PIA19142), InSight (PIA25287) & Ingenuity Helicopter (PIA26243)',
+    title: 'Viking 1 Lander (PIA00381), Mars Pathfinder & Sojourner (PIA01122), Spirit & Opportunity MER (PIA19142), InSight (PIA25287) & Ingenuity Helicopter (PIA26243)',
     credits: 'NASA Science Mission Directorate, NASA Jet Propulsion Laboratory (JPL-Caltech), Cornell, ASU, and MSSS.',
     localFile: 'assets/nasa/missions/ (5 Mars mission images)',
-    url: 'https://science.nasa.gov/mars/',
-    directUrl: 'https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/'
+    url: 'https://science.nasa.gov/mission/mars-pathfinder/',
+    directUrl: 'https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/'
   },
   {
     category: 'Deep Space, Outer Planets & Interstellar Archives',
