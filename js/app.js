@@ -778,7 +778,7 @@ function initSourcesModal() {
   const closeBtnBottom = document.getElementById('close-sources-btn-bottom');
 
   if (countBadge) {
-    countBadge.textContent = String(NASA_ARTIFACTS.length);
+    countBadge.textContent = String(NASA_RESOURCES.length + NASA_ARTIFACTS.length);
   }
 
   if (listEl) {
@@ -790,6 +790,10 @@ function initSourcesModal() {
           <a href="${res.url}" target="_blank" rel="noopener noreferrer" class="source-item-link">
             ${res.url} ↗
           </a>
+          ${res.directUrl && res.directUrl !== res.url ? `
+          <a href="${res.directUrl}" target="_blank" rel="noopener noreferrer" class="source-item-link">
+            ${res.directUrl} ↗
+          </a>` : ''}
         </div>
       `
     ).join('');
@@ -1138,7 +1142,7 @@ function openModelInspector() {
           return;
         }
         btn.classList.add('is-selected');
-        inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom, pos: p.pos || null, name: p.name });
+        inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom, pos: p.pos || null, anchor: p.anchor || null, color: p.color || null, name: p.name });
         if (spinBtn) {
           spinBtn.disabled = true;
           spinBtn.setAttribute('aria-pressed', 'false');

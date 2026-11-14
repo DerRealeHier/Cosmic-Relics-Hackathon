@@ -212,7 +212,7 @@ void main() {
     float dist = length(vLocalPos - uHighlightPos);
     float spot = 1.0 - smoothstep(0.14, 0.42, dist);
     vec3 glowTint = vec3(0.32, 0.22, 0.04) * (0.55 + 0.45 * uPulse);
-    shaded = mix(shaded * 0.45, shaded * 1.15 + glowTint, spot);
+    shaded = mix(shaded * 0.62, shaded * 1.18 + glowTint, spot);
   }
 
   fragColor = vec4(shaded, 1.0);
@@ -3283,6 +3283,8 @@ export class ModelInspector3D {
     this.locs = null;
     this.mesh = null;
     this.centerY = 0;
+    this.geomBounds = null;
+    this.sampledVerts = [];
     this.highlightActive = false;
     this.highlightPos = [0, 0, 0];
     this.highlightLabel = '';
@@ -3372,14 +3374,51 @@ export class ModelInspector3D {
     const gl = this.gl;
     if (this.mesh?.vao) gl.deleteVertexArray(this.mesh.vao);
 
-    let minY = Infinity;
-    let maxY = -Infinity;
-    for (let i = 1; i < geom.positions.length; i += 3) {
-      const y = geom.positions[i];
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+    const totalVerts = Math.floor(geom.positions.length / 3);
+    for (let i = 0; i < totalVerts; i++) {
+      if (geom.metas && geom.metas[i * 2 + 1] < -0.25) continue;
+      const x = geom.positions[i * 3];
+      const y = geom.positions[i * 3 + 1];
+      const z = geom.positions[i * 3 + 2];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
       if (y < minY) minY = y;
       if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
     }
     this.centerY = Number.isFinite(minY) && Number.isFinite(maxY) ? (minY + maxY) * 0.5 : 0;
+    if (Number.isFinite(minX) && Number.isFinite(maxX)) {
+      this.geomBounds = {
+        minX, maxX, minY, maxY, minZ, maxZ,
+        cx: (minX + maxX) * 0.5,
+        cy: (minY + maxY) * 0.5,
+        cz: (minZ + maxZ) * 0.5,
+        sx: Math.max(0.05, maxX - minX),
+        sy: Math.max(0.05, maxY - minY),
+        sz: Math.max(0.05, maxZ - minZ)
+      };
+      const step = Math.max(1, Math.floor(totalVerts / 2000));
+      const verts = [];
+      for (let i = 0; i < totalVerts; i += step) {
+        if (geom.metas && geom.metas[i * 2 + 1] < -0.25) continue;
+        verts.push({
+          x: geom.positions[i * 3],
+          y: geom.positions[i * 3 + 1],
+          z: geom.positions[i * 3 + 2],
+          r: geom.colors ? geom.colors[i * 3] : 0.8,
+          g: geom.colors ? geom.colors[i * 3 + 1] : 0.8,
+          b: geom.colors ? geom.colors[i * 3 + 2] : 0.8
+        });
+      }
+      this.sampledVerts = verts;
+    } else {
+      this.geomBounds = null;
+      this.sampledVerts = [];
+    }
 
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -3412,7 +3451,7 @@ export class ModelInspector3D {
     this.renderFrame(performance.now());
   }
 
-  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85, pos = null, name = '' } = {}) {
+  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85, pos = null, anchor = null, color = null, name = '' } = {}) {
     this.autoSpin = false;
     this.rotationLocked = true;
     this.isDragging = false;
@@ -3424,8 +3463,51 @@ export class ModelInspector3D {
     this.highlightLabel = name;
     if (Array.isArray(pos) && pos.length === 3) {
       this.highlightPos = pos;
+    } else if (this.geomBounds && this.sampledVerts.length > 0) {
+      const b = this.geomBounds;
+      let tx, ty, tz;
+      if (Array.isArray(anchor) && anchor.length === 3) {
+        tx = b.cx + anchor[0] * b.sx * 0.45;
+        ty = b.cy + anchor[1] * b.sy * 0.45;
+        tz = b.cz + anchor[2] * b.sz * 0.45;
+      } else {
+        tx = b.cx - Math.sin(yaw) * Math.cos(pitch) * b.sx * 0.36;
+        ty = b.cy + Math.sin(pitch) * b.sy * 0.36;
+        tz = b.cz + Math.cos(yaw) * Math.cos(pitch) * b.sz * 0.36;
+      }
+      let tr = 0.8, tg = 0.8, tb = 0.8, hasColor = false;
+      if (typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color)) {
+        tr = parseInt(color.slice(1, 3), 16) / 255;
+        tg = parseInt(color.slice(3, 5), 16) / 255;
+        tb = parseInt(color.slice(5, 7), 16) / 255;
+        hasColor = true;
+      }
+      let bestVert = this.sampledVerts[0];
+      let bestScore = Infinity;
+      const invSx = 1 / b.sx;
+      const invSy = 1 / b.sy;
+      const invSz = 1 / b.sz;
+      for (let i = 0; i < this.sampledVerts.length; i++) {
+        const v = this.sampledVerts[i];
+        const dx = (v.x - tx) * invSx;
+        const dy = (v.y - ty) * invSy;
+        const dz = (v.z - tz) * invSz;
+        const distSq = dx * dx + dy * dy + dz * dz;
+        let colorPen = 0;
+        if (hasColor) {
+          const cr = v.r - tr;
+          const cg = v.g - tg;
+          const cb = v.b - tb;
+          colorPen = (cr * cr + cg * cg + cb * cb) * 0.14;
+        }
+        const score = distSq + colorPen;
+        if (score < bestScore) {
+          bestScore = score;
+          bestVert = v;
+        }
+      }
+      this.highlightPos = [bestVert.x, bestVert.y, bestVert.z];
     } else {
-      // Derive an accurate 3D surface anchor on the front-facing side of the selected viewing angle
       const r = 0.22;
       this.highlightPos = [
         -Math.sin(yaw) * Math.cos(pitch) * r,
