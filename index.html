@@ -13,12 +13,6 @@
   <!-- 1. BACKGROUND LAYER: Twinkling Deep Space Starfield with 4-Point Cross Stars -->
   <canvas id="starfield-canvas" class="starfield-canvas" aria-hidden="true"></canvas>
 
-  <!-- Subtle Cosmic Nebula Glows -->
-  <div class="nebula-glows" aria-hidden="true">
-    <div class="nebula-blob nebula-indigo"></div>
-    <div class="nebula-blob nebula-sky"></div>
-  </div>
-
   <!-- 2. BOTTOM FOREGROUND LAYER: Interactive 3D Horizon & Glowing 3D Hardware Monument -->
   <div
     id="moon-3d-container"
@@ -56,28 +50,25 @@
       id="story-hud-panel"
       data-window-id="story"
       aria-label="Mission Story, Engineering and Science"
-      class="story-hud-panel hud-panel hud-scanline"
+      class="story-hud-panel hud-panel"
     >
       <!-- Window Drag Bar (visible when Customize Layout mode is active) -->
       <div class="window-drag-bar" data-drag-handle="story">
         <span class="drag-grip-dots" aria-hidden="true">⋮⋮</span>
-        <span>Story Panel (Drag anywhere • Pull bottom-right corner to resize)</span>
+        <span>Story Panel (Drag anywhere · Pull bottom-right corner to resize)</span>
       </div>
 
       <!-- Realm Switcher: Moon / Mars / Universe -->
       <div class="realm-switcher-bar" role="tablist" aria-label="Select Space Realm">
         <button type="button" data-realm="moon" role="tab" aria-selected="true" class="realm-btn is-active">
-          <span aria-hidden="true">🌙</span>
           <span>Moon</span>
           <span class="realm-count" id="count-moon">6</span>
         </button>
         <button type="button" data-realm="mars" role="tab" aria-selected="false" class="realm-btn">
-          <span aria-hidden="true">🔴</span>
           <span>Mars</span>
           <span class="realm-count" id="count-mars">5</span>
         </button>
         <button type="button" data-realm="universe" role="tab" aria-selected="false" class="realm-btn">
-          <span aria-hidden="true">🌌</span>
           <span>Universe</span>
           <span class="realm-count" id="count-universe">5</span>
         </button>
@@ -88,7 +79,7 @@
         <div class="story-title-group">
           <div class="story-badge-row">
             <span id="realm-archive-badge" class="archive-badge">
-              NASA ARCHIVE // SILENT MONUMENTS OF THE MOON
+              NASA Archive · Moon
             </span>
             <span id="mission-year-badge" class="year-badge">1969</span>
           </div>
@@ -115,13 +106,13 @@
       <!-- Navigation Tabs: The Story / Engineering / Science -->
       <div class="story-tabs-grid" role="tablist" aria-label="Artifact Information Tabs">
         <button type="button" data-tab="story" role="tab" aria-selected="true" class="tab-btn is-active">
-          <span aria-hidden="true">📖</span><span>The Story</span>
+          <span>The Story</span>
         </button>
         <button type="button" data-tab="tech" role="tab" aria-selected="false" class="tab-btn">
-          <span aria-hidden="true">🛰️</span><span>Engineering</span>
+          <span>Engineering</span>
         </button>
         <button type="button" data-tab="science" role="tab" aria-selected="false" class="tab-btn">
-          <span aria-hidden="true">🔬</span><span>Science</span>
+          <span>Science</span>
         </button>
       </div>
 
@@ -188,10 +179,10 @@
                 <stop offset="100%" stop-color="#090402" />
               </radialGradient>
               <radialGradient id="universeDiscGrad" cx="50%" cy="50%" r="60%">
-                <stop offset="0%" stop-color="#1e1b4b" />
-                <stop offset="50%" stop-color="#0f172a" />
-                <stop offset="90%" stop-color="#020617" />
-                <stop offset="100%" stop-color="#01030a" />
+                <stop offset="0%" stop-color="#141c2b" />
+                <stop offset="50%" stop-color="#0b101b" />
+                <stop offset="90%" stop-color="#05080f" />
+                <stop offset="100%" stop-color="#020408" />
               </radialGradient>
               <filter id="glowAmber" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
@@ -219,9 +210,8 @@
 
         <!-- Visual Interactive Radar Map Coachmark -->
         <div id="tutorial-map-coachmark" class="tutorial-coachmark tutorial-map-coachmark">
-          <span class="map-coach-pointer" aria-hidden="true">👆</span>
           <span class="tutorial-coachmark-text">
-            <strong>Radar Map:</strong> Click any glowing pin or use <strong>« Previous / Next »</strong> below to fly to that mission!
+            <strong>Radar Map:</strong> Click any marker or use <strong>Previous / Next</strong> below to fly to that mission.
           </span>
           <button type="button" class="tutorial-dismiss-chip" data-dismiss-coachmark="tutorial-map-coachmark" aria-label="Hide Map Hint">✕</button>
         </div>
@@ -253,54 +243,32 @@
         <div class="cockpit-dock-top">
           <span class="pill-status">
             <span class="pulse-dot" id="horizon-pill-dot" aria-hidden="true"></span>
-            <span id="horizon-realm-label">COMIC 3D LUNAR HORIZON</span>
+            <span id="horizon-realm-label">3D Lunar Horizon</span>
           </span>
           <button type="button" id="toggle-full-globe-btn" class="pill-action-btn" aria-pressed="false" title="Move mouse to bottom edge or click here to center the full 3D Moon/Mars globe — or lower it back down to the horizon">
-            <span aria-hidden="true">🌕</span>
-            <span id="full-globe-btn-label">Full Globe (Hover Bottom)</span>
+            <span id="full-globe-btn-label">Full Globe</span>
           </button>
         </div>
 
         <!-- Visual 3D Drag & Full Globe Coachmark (Inside Right Dock — Never blocks bottom-center!) -->
         <div id="tutorial-3d-coachmark" class="tutorial-coachmark tutorial-dock-coachmark">
-          <div class="tutorial-3d-gizmo" aria-hidden="true">
-            <svg viewBox="0 0 110 76" class="gizmo-svg">
-              <defs>
-                <marker id="arrowCyan" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
-                </marker>
-                <marker id="arrowAmber" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
-                </marker>
-              </defs>
-              <ellipse cx="55" cy="42" rx="40" ry="15" fill="none" stroke="rgba(56,189,248,0.45)" stroke-width="1.6" stroke-dasharray="4 3" />
-              <path d="M 14 42 Q 55 62 96 42" fill="none" stroke="#38bdf8" stroke-width="2.2" marker-start="url(#arrowCyan)" marker-end="url(#arrowCyan)" />
-              <line x1="55" y1="68" x2="55" y2="10" stroke="#fbbf24" stroke-width="2" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" />
-              <text x="61" y="16" fill="#fef08a" font-size="8" font-family="JetBrains Mono, monospace">3D AXIS</text>
-            </svg>
-            <div class="Animated-hand-icon" title="Drag left/right &amp; scroll to zoom">🖐️</div>
-          </div>
           <div class="tutorial-coachmark-text">
-            <strong>3D &amp; Full Moon:</strong> Drag <strong>🖐️ ↔</strong> to rotate • Move mouse to <strong>bottom edge ↓</strong> to raise the <strong>full Moon to center</strong> (move up to lower it again)!
+            <strong>3D Controls:</strong> Drag to orbit · Scroll to zoom · Hover the <strong>bottom edge</strong> to center the full globe.
           </div>
           <button type="button" class="tutorial-dismiss-chip" data-dismiss-coachmark="tutorial-3d-coachmark" aria-label="Hide 3D Hint">✕</button>
         </div>
 
         <div class="cockpit-dock-actions">
           <button type="button" id="toggle-layout-edit-btn" class="pill-action-btn" aria-pressed="false" title="Move and resize Story, Map, and 3D Viewport freely anywhere on screen">
-            <span aria-hidden="true">✥</span>
             <span id="layout-edit-btn-label">Customize Layout</span>
           </button>
           <button type="button" id="reset-layout-btn" class="pill-action-btn pill-reset-btn" title="Restore all panels and 3D view to default">
-            <span aria-hidden="true">↺</span>
             <span>Reset Default</span>
           </button>
           <button type="button" id="open-tutorial-btn" class="pill-action-btn pill-help-btn" title="Show interactive visual tutorials for 3D dragging, map radar, and layout">
-            <span aria-hidden="true">💡</span>
             <span>Visual Guide</span>
           </button>
-          <button type="button" id="open-inspector-btn" class="pill-action-btn" title="Inspect detailed 3D spacecraft parts and rotate 360°">
-            <span aria-hidden="true">🔍</span>
+          <button type="button" id="open-inspector-btn" class="pill-action-btn pill-primary-btn" title="Inspect detailed 3D spacecraft parts and rotate 360°">
             <span>3D Parts</span>
           </button>
         </div>
@@ -315,7 +283,7 @@
     <div class="sources-modal-card photo-lightbox-card hud-panel">
       <div class="sources-modal-header">
         <div>
-          <span id="lightbox-photo-badge" class="modal-kicker">📸 Official NASA Mission Photograph</span>
+          <span id="lightbox-photo-badge" class="modal-kicker">Official NASA Mission Photograph</span>
           <h2 id="lightbox-photo-title" class="modal-title">Mission Photograph</h2>
         </div>
         <button type="button" id="close-lightbox-btn" class="icon-close-btn" aria-label="Close Enlarged Photo">
@@ -414,10 +382,10 @@
 
       <div class="sources-modal-footer tutorial-modal-footer">
         <button type="button" id="tutorial-enable-customize-btn" class="pill-action-btn">
-          ✥ Try Customize Layout Now
+          Customize Layout
         </button>
         <button type="button" id="close-tutorial-btn-bottom" class="modal-return-btn">
-          Got It — Back to Space!
+          Back to Scene
         </button>
       </div>
     </div>
@@ -428,16 +396,14 @@
     <div class="sources-modal-card inspector-modal-card hud-panel">
       <div class="sources-modal-header">
         <div>
-          <span id="inspector-model-kicker" class="modal-kicker">Interactive 3D Spacecraft Inspector</span>
+          <span id="inspector-model-kicker" class="modal-kicker">3D Spacecraft Inspector</span>
           <h2 id="inspector-modal-title" class="modal-title">Spacecraft Components</h2>
         </div>
         <div class="inspector-header-actions">
           <button type="button" id="inspector-autospin-btn" class="pill-action-btn" aria-pressed="true">
-            <span aria-hidden="true">🔄</span>
             <span>Auto-Spin</span>
           </button>
           <button type="button" id="inspector-reset-btn" class="pill-action-btn">
-            <span aria-hidden="true">↺</span>
             <span>Reset View</span>
           </button>
           <button type="button" id="close-inspector-btn" class="icon-close-btn" aria-label="Close 3D Inspector">
