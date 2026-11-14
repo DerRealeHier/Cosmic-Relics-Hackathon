@@ -166,7 +166,7 @@ export const NASA_ARTIFACTS = [
     image: 'assets/nasa/missions/apollo15-alsep-as15-85-11471.jpg',
     imageId: 'as15-85-11471',
     imageCredit: 'NASA / JSC',
-    kidFunFact: '🪶 Cool Space Fact: On live TV, Astronaut Dave Scott dropped a heavy hammer and a falcon feather at the same time — with zero air on the Moon, both hit the ground at the exact same instant!',
+    kidFunFact: '🪶 Cool Space Fact: On live TV, Astronaut Dave Scott dropped a heavy hammer and a falcon feather at the same time — with zero air on the Moon, both hit the ground at the exact same time!',
     shortSummary: 'The Apollo 15 Lunar Module was called Falcon. It was the fourth spacecraft to land people on the Moon. It carried two astronauts, David Scott and James Irwin, to the lunar surface. It also brought a Moon rover and scientific equipment to explore the Moon and learn more about it.',
     gallery: [
       {
@@ -469,7 +469,7 @@ export const NASA_ARTIFACTS = [
     imageId: 'PIA01122',
     imageCredit: 'NASA / JPL',
     kidFunFact: '🎈 Cool Space Fact: Sojourner landed wrapped inside 24 giant airbags — bouncing 15 times (15 meters high!) across Mars before unfolding like a metal flower! And the rover itself is only the size of a microwave oven!',
-    shortSummary: 'After bouncing onto Mars inside 24 giant airbags on July 4, 1997, microwave-sized Sojourner rolled down a ramp on 6 wheels to become the very first rover ever to drive on the Red Planet!',
+    shortSummary: 'NASA’s Mars Pathfinder was a space mission that started in December 1996 and landed on Mars on July 4, 1997. It had an innovative landing system using a parachute and giant airbags that bounced across Ares Vallis, then deployed the Sojourner rover — the first free-ranging robotic rover to explore the Red Planet.',
     gallery: [
       {
         src: 'assets/nasa/missions/sojourner-pia01122.jpg',
@@ -493,21 +493,21 @@ export const NASA_ARTIFACTS = [
     sourceTitle: 'NASA Science — Mars Pathfinder & Sojourner',
     sourceUrl: 'https://science.nasa.gov/mission/mars-pathfinder/',
     story: [
-      '"Instead of hovering down on big retro-rockets like Viking, my mother ship Mars Pathfinder and I arrived on July 4, 1997 wrapped inside a giant cluster of 24 airbags! We hit the ancient flood plain of Ares Vallis at 50 kilometers per hour and bounced 15 times—leaping 15 meters high on the first bounce—before rolling to a stop and unfolding like three metallic flower petals."',
-      '"Wait until you see how small I am: just 65 centimeters long and weighing 10.6 kilograms—about the size of a microwave oven! Named after abolitionist hero Sojourner Truth, I rolled down Pathfinder’s rear ramp on my six cleated aluminum wheels to become the very first rover ever to drive on Mars."',
-      '"With my flexible Rocker-Bogie suspension—the exact same wheel design later scaled up for Spirit, Opportunity, Curiosity, and Perseverance—I climbed over rocks nicknamed Barnacle Bill, Yogi, and Shark, pressing my Alpha Proton X-Ray Spectrometer against their surfaces like a curious geologist’s nose."',
-      '"Though I was built for a 7-sol technology demonstration, Pathfinder and I explored Ares Vallis for 83 sols, snapping 17,000 photos before the bitter Martian cold silenced Pathfinder’s battery. My programming told me to circle my silent lander and wait for a signal from home."'
+      'In December 1996, NASA launched the Mars Pathfinder mission with an ambitious goal: to land a spacecraft on Mars and deploy a small robotic rover that could explore the planet’s surface.',
+      'On July 4, 1997, Pathfinder successfully landed in Ares Vallis, an ancient floodplain in the northern hemisphere of Mars. It was a historic moment for space exploration — for the first time, a free-ranging robotic rover was operating on the surface of another planet.',
+      'The landing itself was spectacular. Instead of using traditional landing legs, Pathfinder was protected by a system of giant airbags (approx. 5.8 m diameter). After descending by parachute, the spacecraft bounced across the Martian surface at ~14 m/s before finally coming to rest.',
+      'Once safely on the ground, the lander deployed its companion rover, named Sojourner. The rover began exploring nearby rocks and soil, sending valuable images and scientific measurements back to Earth. Together they captured over 17,000 images (more than 16,500 from the lander and ~550 from Sojourner), made more than 15 chemical analyses of rocks and soil, and collected extensive weather data — giving strong evidence that Mars once was warm and had liquid water.'
     ],
     tech: {
-      hardware: 'Sojourner 6-Wheel Microrover + Mars Pathfinder Tetrahedral Lander',
-      mass: '10.6 kg (Sojourner rover) + 264 kg (Pathfinder lander & airbag petals)',
-      dimensions: '0.65 m length × 0.48 m width × 0.30 m height (6× 13 cm wheels)',
-      survival: 'Operated for 83 sols (12× its 7-sol design life), driving ~100 meters around the Carl Sagan Memorial Station. Both lander and rover were spotted from orbit by MRO HiRISE.'
+      hardware: 'Mars Pathfinder Lander + Sojourner Rover · Launch Vehicle: Delta II 7925',
+      mass: '10.6 kg Rover · ~30 cm height · Airbag diameter: ~5.8 m · Landing speed: ~14 m/s',
+      dimensions: 'Launch: Dec 4, 1996 · Landing: July 4, 1997 (Ares Vallis) · End of Mission: Sept 27, 1997',
+      survival: 'Operated until September 27, 1997, delivering >17,000 images, >15 chemical rock/soil analyses, and extensive Martian weather measurements.'
     },
     science: [
-      'Proved Airbag EDL & Rocker-Bogie Mobility: Validated the airbag landing architecture and 6-wheel Rocker-Bogie suspension that enabled every subsequent NASA Mars rover.',
-      'Ancient Catastrophic Flood Geology in Ares Vallis: Imaged rounded pebbles, imbricated boulders, and twin hills ("Twin Peaks") sculpted by ancient mega-floods billions of years ago.',
-      'Andesitic Rock Chemistry via APXS: Discovered silica-rich rocks like "Barnacle Bill," showing that early Mars experienced more complex magmatic differentiation than simple basalt.'
+      'Chemical Analysis of Rocks & Soil (APXS): The Alpha Proton X-ray Spectrometer examined the chemical composition of Martian rocks and soil, revealing silica-rich rocks and signs of water alteration.',
+      'Weather & Atmospheric Measurements (ASI/MET): Measured temperature, pressure, wind, magnetic dust, dust devils, and water-ice clouds throughout the Martian day.',
+      'Photography, Geological Studies & Core Interior: Cameras studied rounded pebbles and ancient river-flood geology pointing to a warmer, wetter Mars, while radio tracking helped estimate the size of Mars’s metallic core.'
     ]
   },
   {
@@ -515,20 +515,20 @@ export const NASA_ARTIFACTS = [
     realm: 'mars',
     code: 'OPPORTUNITY',
     year: '2004–2018',
-    title: 'Opportunity (MER-B): Marathon Explorer of Meridiani Planum',
-    region: 'Perseverance Valley, Endeavour Crater',
+    title: 'Spirit & Opportunity (MER): Twin Robots on Mars',
+    region: 'Meridiani Planum & Gusev Crater',
     coords: '2.05° S, 5.53° W',
     mapX: 154,
     mapY: 116,
-    status: 'Off-World Distance Record (45.16 km / 5,111 Sols)',
+    status: 'Off-World Distance Record (45.16 km / 300,000+ Photos)',
     statusColor: 'amber',
     artifactType: 'rover',
     horizonAngle: 2.8,
     image: 'assets/nasa/missions/opportunity-pia19142.jpg',
     imageId: 'PIA19142',
     imageCredit: 'NASA / JPL-Caltech / Cornell / ASU',
-    kidFunFact: '🏃 Cool Space Fact: Opportunity ("Oppy") was built to last only 90 days — but Martian dust devils kept sweeping its solar panels clean, letting it drive a 45.16 km marathon for 14 years!',
-    shortSummary: 'Opportunity ("Oppy") was only supposed to last 90 days, but explored Mars for 14 years and drove a record 45.16 km marathon — discovering mineral "blueberries" that proved ancient Mars once had liquid water!',
+    kidFunFact: '🏃 Cool Space Fact: Spirit and Opportunity were built to last only 90 days — but Spirit explored for over 6 years (7.7 km) and Opportunity for nearly 15 years (45.16 km), snapping over 300,000 pictures!',
+    shortSummary: 'Spirit and Opportunity were NASA’s two identical robots sent to Mars in 2004 on opposite sides of the Red Planet to search for clues about ancient water. Spirit drove 7.7 km until 2010, and Opportunity traveled 45.16 km until a massive dust storm in 2018 — together taking over 300,000 pictures and proving liquid water once existed on Mars.',
     gallery: [
       {
         src: 'assets/nasa/missions/opportunity-pia19142.jpg',
@@ -552,21 +552,21 @@ export const NASA_ARTIFACTS = [
     sourceTitle: 'NASA Science — Mars Exploration Rover Opportunity',
     sourceUrl: 'https://science.nasa.gov/mission/mer-opportunity/',
     story: [
-      '"When my airbags bounced into tiny Eagle Crater on January 25, 2004, NASA called it an interplanetary hole-in-one! My engineers gave me and my twin sister Spirit a warranty of just 90 Martian sols and a goal of driving 600 meters—expecting red Martian dust to coat my solar wings and end my mission within three months."',
-      '"Right inside Eagle Crater, my panoramic cameras spotted millions of tiny gray mineral spheres we nicknamed blueberries—hematite concretions that proved liquid water once soaked the rocks beneath my wheels. Refusing to quit, I climbed out of Eagle Crater and began an epic fourteen-year odyssey across Meridiani Planum!"',
-      '"Whenever dust dimmed my solar panels, lucky Martian wind gusts and dust devils swept my wings clean again. I explored Endurance Crater, survived treacherous Purgatory Dune, peered into vast Victoria Crater, and crossed the plains to the rim of 22-kilometer-wide Endeavour Crater—completing the first 42.195-kilometer marathon ever driven on another world!"',
-      '"In June 2018, after 5,111 sols and 45.16 kilometers of exploration, the most intense planet-encircling dust storm in decades blotted out the Sun over Perseverance Valley. My final telemetry whispered that the sky was dark and my solar energy was fading—leaving behind a legacy that proved ancient Mars was once a wet, habitable world."'
+      'In 2003, NASA launched two nearly identical robotic explorers called Spirit and Opportunity to search for evidence that liquid water had once existed on Mars. Spirit landed in Gusev Crater on January 3, 2004, and Opportunity followed on January 24/25, 2004 on the opposite side of Mars in Meridiani Planum.',
+      'Originally, the rovers were designed to operate for only 90 Martian days (sols). However, both robots performed far beyond expectations, examining rocks and soil and sending thousands of scientific observations back to Earth.',
+      'Spirit traveled 7.7 kilometers (climbing slopes up to 30°) before becoming stuck in soft soil in 2009, sending its last communication in March 2010 after over 6 years on Mars.',
+      'Opportunity had an even longer journey, traveling an incredible 45.16 kilometers (climbing slopes up to 32°) for almost 15 years. In June 2018, a massive global dust storm covered its solar panels, and NASA officially ended the mission in February 2019. Together, Spirit and Opportunity sent back more than 300,000 images and proved that liquid water once shaped Mars.'
     ],
     tech: {
-      hardware: 'Mars Exploration Rover MER-B "Opportunity" (6-Wheel Solar Geologist)',
-      mass: '185 kg (rover mass on Mars)',
-      dimensions: '1.5 m height × 2.3 m width × 1.6 m length',
-      survival: 'Operated for 5,111 sols (14 Earth years, 55× its 90-sol design life) and drove 45.16 km—still the farthest distance driven by any vehicle on another world. Rests in Perseverance Valley on the western rim of Endeavour Crater.'
+      hardware: 'Two 6-Wheeled Solar Rovers (Golf-Cart Sized) · Robotic Arm (IDD) & Rock Abrasion Tool (RAT)',
+      mass: '~174 kg each · Solar panels + rechargeable batteries + radioisotope heater units',
+      dimensions: 'Planned: 90 sols · Spirit: >6 yrs (7.7 km, 30° slope) · Opportunity: ~15 yrs (45.16 km, 32° slope)',
+      survival: 'Communicated via NASA’s Deep Space Network and Mars-orbiting relays, returning over 300,000 combined images.'
     },
     science: [
-      'Hematite "Blueberries" & Acidic Groundwater: Discovered spherical hematite concretions and jarosite sulfate beds at Eagle and Endurance Craters, proving liquid water once flowed through and pooled on Meridiani Planum.',
-      'Neutral-pH Clay Minerals & Gypsum Veins at Endeavour Crater: Found ancient smectite clays and pure calcium-sulfate (gypsum) veins ("Homestake"), revealing an even older era of mild, drinkable-pH water friendly to life.',
-      'First Meteorite Discovered on Another Planet: Identified "Heat Shield Rock" (Meridiani Planum meteorite), an iron-nickel meteorite sitting cleanly on the Martian plains.'
+      'Spectrometers & Close-Up Tools (APXS, Mössbauer, Mini-TES, Microscopic Imager, RAT): Ground into fresh rock surfaces and identified iron-bearing & water-altered minerals like jarosite.',
+      'Pancam, Navcams & Atmospheric Studies: Captured 300,000+ color/panoramic images and studied magnetic Martian dust, dust devils, rock layers, and erosion.',
+      'Ancient Water & Habitability Discoveries: Found evidence of ancient liquid water, hydrothermal activity, and environments that may once have supported microbial life.'
     ]
   },
   {

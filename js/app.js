@@ -1126,7 +1126,7 @@ function openModelInspector() {
         if (!inspector3d) return;
         partsListEl.querySelectorAll('.inspector-part-card').forEach((c) => c.classList.remove('is-selected'));
         btn.classList.add('is-selected');
-        inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom });
+        inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom, pos: p.pos || null, name: p.name });
         if (spinBtn) spinBtn.setAttribute('aria-pressed', 'false');
       });
 
@@ -1139,7 +1139,21 @@ function openModelInspector() {
   }
 
   if (!inspector3d) {
-    inspector3d = new ModelInspector3D(document.getElementById('inspector-3d-canvas'));
+    const pinEl = document.getElementById('inspector-callout-pin');
+    const pinLabelEl = document.getElementById('inspector-callout-label');
+    inspector3d = new ModelInspector3D(document.getElementById('inspector-3d-canvas'), (proj) => {
+      if (!pinEl) return;
+      if (!proj || !proj.visible || !proj.label) {
+        pinEl.hidden = true;
+        return;
+      }
+      pinEl.hidden = false;
+      pinEl.style.left = `${Math.round(proj.x)}px`;
+      pinEl.style.top = `${Math.round(proj.y)}px`;
+      if (pinLabelEl && pinLabelEl.textContent !== proj.label) {
+        pinLabelEl.textContent = proj.label;
+      }
+    });
   }
   if (geom) {
     inspector3d.setGeometry(geom);
