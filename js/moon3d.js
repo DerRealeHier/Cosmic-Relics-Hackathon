@@ -1473,57 +1473,105 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     addComicBeaconAura(mb);
 
   } else if (key === 'surveyor3') {
-    // 2. SURVEYOR 3: Detailed Robotic Tripod Lander + Mast + Solar Sail + Digging Scoop Arm
-    mb.addPart(makeCylinderGeometry(0.11, 0.14, 0.16, 6), {
-      translate: [0, 0.19, 0],
+    // 2. SURVEYOR 3: Detailed Robotic Tripod Lander + Space-Frame Trusses + Thermal Compartments + Mast + Digging Scoop
+    // Triangular tubular space-frame base & 3 Vernier engine nozzles
+    mb.addPart(makeCylinderGeometry(0.16, 0.19, 0.05, 3), {
+      translate: [0, 0.14, 0],
+      color: PALETTE.slateMetal
+    });
+    for (let i = 0; i < 3; i++) {
+      const va = (i * Math.PI * 2) / 3 + Math.PI / 3;
+      mb.addPart(makeConeGeometry(0.032, 0.055, 10), {
+        translate: [Math.cos(va) * 0.11, 0.10, Math.sin(va) * 0.11],
+        rotate: [Math.PI, 0, 0],
+        color: PALETTE.darkSteel
+      });
+    }
+    // Dual Gold & White Thermal Electronics Compartments
+    mb.addPart(makeBoxGeometry(0.14, 0.12, 0.11), {
+      translate: [-0.07, 0.21, -0.05],
+      rotate: [0, 0.4, 0],
+      color: PALETTE.goldFoil,
+      mode: 0.25
+    });
+    mb.addPart(makeBoxGeometry(0.12, 0.10, 0.10), {
+      translate: [0.08, 0.20, -0.06],
+      rotate: [0, -0.5, 0],
       color: PALETTE.whiteHull
     });
-    // Central Telemetry Mast
-    mb.addPart(makeCylinderGeometry(0.018, 0.025, 0.56, 10), {
-      translate: [0, 0.32, 0],
+    // Central Telemetry Mast & Cross-Arm
+    mb.addPart(makeCylinderGeometry(0.018, 0.024, 0.56, 10), {
+      translate: [0, 0.36, 0],
       color: PALETTE.whiteHull
+    });
+    mb.addPart(makeCylinderGeometry(0.008, 0.008, 0.22, 8), {
+      translate: [0, 0.56, 0],
+      rotate: [0, 0, Math.PI / 2],
+      color: PALETTE.slateMetal
     });
     // Angled Blue Solar Panel & High-Gain Planar Antenna on Top
-    mb.addPart(makeBoxGeometry(0.38, 0.022, 0.20), {
-      translate: [0, 0.61, 0],
+    mb.addPart(makeBoxGeometry(0.40, 0.022, 0.21), {
+      translate: [0.02, 0.65, 0],
       rotate: [0.22, 0.2, 0.32],
       color: PALETTE.skySolar,
       mode: 0.35
     });
-    mb.addPart(makeBoxGeometry(0.22, 0.16, 0.02), {
-      translate: [-0.14, 0.46, 0.05],
+    mb.addPart(makeBoxGeometry(0.24, 0.17, 0.022), {
+      translate: [-0.14, 0.48, 0.05],
       rotate: [0, 0.4, -0.25],
       color: PALETTE.whiteHull
     });
-    // TV Camera Turret with blue lens
-    mb.addPart(makeCylinderGeometry(0.045, 0.045, 0.12, 12), {
-      translate: [0.09, 0.36, 0.08],
+    mb.addPart(makeBoxGeometry(0.19, 0.13, 0.028), {
+      translate: [-0.14, 0.48, 0.055],
+      rotate: [0, 0.4, -0.25],
+      color: PALETTE.goldFoil,
+      mode: 0.25
+    });
+    // Omnidirectional Whip Antennas
+    mb.addPart(makeCylinderGeometry(0.005, 0.007, 0.26, 6), {
+      translate: [0.14, 0.52, -0.08],
+      rotate: [0.2, 0, -0.2],
+      color: PALETTE.slateMetal
+    });
+    // TV Camera Turret with Mirror Hood & Cyan Lens
+    mb.addPart(makeCylinderGeometry(0.045, 0.045, 0.13, 12), {
+      translate: [0.09, 0.37, 0.08],
       color: PALETTE.whiteHull
     });
+    mb.addPart(makeBoxGeometry(0.06, 0.05, 0.06), {
+      translate: [0.09, 0.44, 0.08],
+      rotate: [0.35, 0.2, 0],
+      color: PALETTE.slateMetal
+    });
     mb.addPart(makeSphereGeometry(0.036, 12, 12), {
-      translate: [0.11, 0.39, 0.11],
+      translate: [0.11, 0.40, 0.11],
       color: PALETTE.laserCyan,
       mode: 0.80
     });
 
-    // 3 Tripod Legs with Crushable Footpads
+    // 3 Tripod Legs with Struts, Shock Absorbers & Crushable Gold Footpads
     for (let i = 0; i < 3; i++) {
       const angle = (i * Math.PI * 2) / 3 + 0.3;
       const leg = new MeshBuilder();
-      leg.addPart(makeCylinderGeometry(0.014, 0.014, 0.34, 8), {
+      leg.addPart(makeCylinderGeometry(0.014, 0.014, 0.36, 8), {
         translate: [0.19, 0.13, 0],
         rotate: [0, 0, -0.62],
         color: PALETTE.whiteHull
       });
-      leg.addPart(makeCylinderGeometry(0.06, 0.07, 0.025, 12), {
-        translate: [0.31, 0.012, 0],
+      leg.addPart(makeCylinderGeometry(0.009, 0.009, 0.22, 8), {
+        translate: [0.16, 0.17, 0],
+        rotate: [0, 0, -1.15],
+        color: PALETTE.slateMetal
+      });
+      leg.addPart(makeCylinderGeometry(0.062, 0.072, 0.025, 12), {
+        translate: [0.32, 0.012, 0],
         color: PALETTE.goldFoil,
         mode: 0.25
       });
       mb.addGroup(leg, { rotate: [0, angle, 0] });
     }
 
-    // Extended Pantograph Soil-Sampler Scoop Arm digging into lunar dust!
+    // Extended Articulated Pantograph Soil-Sampler Scoop Arm digging into lunar dust!
     const armGroup = new MeshBuilder();
     armGroup.addPart(makeBoxGeometry(0.24, 0.022, 0.035), {
       translate: [0.12, -0.04, 0.06],
@@ -1535,7 +1583,7 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       rotate: [0, -0.45, -0.55],
       color: PALETTE.whiteHull
     });
-    armGroup.addPart(makeBoxGeometry(0.06, 0.04, 0.045), {
+    armGroup.addPart(makeBoxGeometry(0.065, 0.042, 0.048), {
       translate: [0.38, -0.19, 0.19],
       rotate: [0, -0.45, 0.2],
       color: PALETTE.deepOrange,
@@ -1546,97 +1594,122 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     addComicBeaconAura(mb);
 
   } else if (key === 'apollo15') {
-    // 3. APOLLO 15: Detailed Lunar Roving Vehicle (LRV-1) + Dish Antenna + TV Camera + Hammer & Feather!
+    // 3. APOLLO 15: Detailed Lunar Roving Vehicle (LRV-1) + ALSEP RTG + Dish + TV Camera + Hammer & Feather!
     const rover = new MeshBuilder();
 
-    // Aluminum Space-Frame Chassis & Gold Foil Forward Avionics
-    rover.addPart(makeBoxGeometry(0.56, 0.045, 0.32), {
+    // Aluminum Space-Frame Chassis, Side Rails & Gold Foil Forward Avionics
+    rover.addPart(makeBoxGeometry(0.58, 0.045, 0.30), {
       translate: [0, 0.13, 0],
       color: PALETTE.slateMetal
     });
-    rover.addPart(makeBoxGeometry(0.16, 0.09, 0.28), {
-      translate: [0.20, 0.17, 0],
+    rover.addPart(makeBoxGeometry(0.17, 0.095, 0.28), {
+      translate: [0.21, 0.175, 0],
       color: PALETTE.goldFoil,
       mode: 0.25
     });
-    // Two Astronaut Mesh Seats with Orange/White Backrests
-    rover.addPart(makeBoxGeometry(0.14, 0.03, 0.11), {
-      translate: [-0.02, 0.17, 0.08],
+    // Aft Science & Tool Rack
+    rover.addPart(makeBoxGeometry(0.12, 0.075, 0.26), {
+      translate: [-0.23, 0.18, 0],
+      color: PALETTE.slateMetal
+    });
+    rover.addPart(makeBoxGeometry(0.09, 0.06, 0.11), {
+      translate: [-0.24, 0.23, 0.06],
       color: PALETTE.whiteHull
     });
-    rover.addPart(makeBoxGeometry(0.03, 0.13, 0.11), {
-      translate: [-0.08, 0.23, 0.08],
-      rotate: [0, 0, 0.2],
-      color: PALETTE.deepOrange,
-      mode: 0.20
+    // Two Astronaut Mesh Seats with Orange Backrests & Roll Bars
+    for (const sz of [0.08, -0.08]) {
+      rover.addPart(makeBoxGeometry(0.14, 0.03, 0.11), {
+        translate: [-0.02, 0.17, sz],
+        color: PALETTE.whiteHull
+      });
+      rover.addPart(makeBoxGeometry(0.03, 0.14, 0.11), {
+        translate: [-0.08, 0.235, sz],
+        rotate: [0, 0, 0.2],
+        color: PALETTE.deepOrange,
+        mode: 0.20
+      });
+    }
+    // Center Control Console & T-Bar Steering Controller
+    rover.addPart(makeBoxGeometry(0.08, 0.055, 0.07), {
+      translate: [0.11, 0.23, 0],
+      rotate: [0, 0, -0.35],
+      color: PALETTE.darkSteel
     });
-    rover.addPart(makeBoxGeometry(0.14, 0.03, 0.11), {
-      translate: [-0.02, 0.17, -0.08],
-      color: PALETTE.whiteHull
-    });
-    rover.addPart(makeBoxGeometry(0.03, 0.13, 0.11), {
-      translate: [-0.08, 0.23, -0.08],
-      rotate: [0, 0, 0.2],
-      color: PALETTE.deepOrange,
-      mode: 0.20
-    });
-    // T-Bar Steering Controller
-    rover.addPart(makeCylinderGeometry(0.008, 0.008, 0.14, 8), {
+    rover.addPart(makeCylinderGeometry(0.008, 0.008, 0.15, 8), {
       translate: [0.09, 0.21, 0],
       rotate: [0, 0, -0.3],
       color: PALETTE.whiteHull
     });
 
-    // Umbrella High-Gain Dish Antenna & Color TV Camera
-    rover.addPart(makeCylinderGeometry(0.008, 0.008, 0.22, 8), {
-      translate: [0.22, 0.30, -0.09],
+    // Umbrella High-Gain Dish Antenna + Feed Horn & Color TV Camera
+    rover.addPart(makeCylinderGeometry(0.008, 0.008, 0.23, 8), {
+      translate: [0.23, 0.31, -0.09],
       color: PALETTE.whiteHull
     });
-    rover.addPart(makeConeGeometry(0.13, 0.07, 16, true), {
-      translate: [0.22, 0.42, -0.09],
+    rover.addPart(makeConeGeometry(0.14, 0.075, 18, true), {
+      translate: [0.23, 0.43, -0.09],
       rotate: [0, 0, -0.45],
       color: PALETTE.goldFoil,
       mode: 0.25
     });
-    rover.addPart(makeBoxGeometry(0.07, 0.055, 0.055), {
-      translate: [0.22, 0.28, 0.09],
+    rover.addPart(makeBoxGeometry(0.075, 0.055, 0.055), {
+      translate: [0.23, 0.28, 0.09],
       color: PALETTE.whiteHull
     });
-    rover.addPart(makeCylinderGeometry(0.018, 0.018, 0.04, 10), {
-      translate: [0.26, 0.28, 0.09],
+    rover.addPart(makeCylinderGeometry(0.018, 0.018, 0.045, 10), {
+      translate: [0.27, 0.28, 0.09],
       rotate: [0, 0, Math.PI / 2],
       color: PALETTE.laserCyan,
       mode: 0.80
     });
 
-    // 4 Wire-Mesh Wheels with Orange Fenders
+    // 4 Wire-Mesh Wheels with Suspension Wishbones, Gold Hubs & Orange Fenders
     [
-      [0.19, 0.19],
-      [0.19, -0.19],
-      [-0.19, 0.19],
-      [-0.19, -0.19]
+      [0.20, 0.195],
+      [0.20, -0.195],
+      [-0.20, 0.195],
+      [-0.20, -0.195]
     ].forEach(([wx, wz]) => {
-      rover.addPart(makeCylinderGeometry(0.085, 0.085, 0.055, 16), {
-        translate: [wx, 0.085, wz],
+      rover.addPart(makeBoxGeometry(0.025, 0.02, 0.08), {
+        translate: [wx, 0.11, wz * 0.78],
+        color: PALETTE.slateMetal
+      });
+      rover.addPart(makeCylinderGeometry(0.088, 0.088, 0.058, 16), {
+        translate: [wx, 0.088, wz],
         rotate: [Math.PI / 2, 0, 0],
         color: PALETTE.darkSteel
       });
-      rover.addPart(makeCylinderGeometry(0.045, 0.045, 0.06, 12), {
-        translate: [wx, 0.085, wz],
+      rover.addPart(makeCylinderGeometry(0.046, 0.046, 0.064, 12), {
+        translate: [wx, 0.088, wz],
         rotate: [Math.PI / 2, 0, 0],
         color: PALETTE.goldFoil,
         mode: 0.25
       });
-      rover.addPart(makeBoxGeometry(0.15, 0.02, 0.07), {
-        translate: [wx, 0.175, wz],
+      rover.addPart(makeBoxGeometry(0.16, 0.02, 0.072), {
+        translate: [wx, 0.182, wz],
         color: PALETTE.deepOrange,
         mode: 0.20
       });
     });
 
     mb.addGroup(rover, {
-      translate: [-0.08, 0.02, 0.05],
+      translate: [-0.08, 0.02, 0.04],
       rotate: [0, -0.35, 0]
+    });
+
+    // Nearby ALSEP Science Station & SNAP-27 RTG Generator
+    mb.addPart(makeBoxGeometry(0.11, 0.075, 0.11), {
+      translate: [-0.42, 0.045, -0.22],
+      color: PALETTE.whiteHull
+    });
+    mb.addPart(makeCylinderGeometry(0.032, 0.032, 0.11, 10), {
+      translate: [-0.46, 0.06, -0.06],
+      color: PALETTE.darkSteel
+    });
+    mb.addPart(makeCylinderGeometry(0.008, 0.008, 0.24, 8), {
+      translate: [-0.42, 0.18, -0.22],
+      color: PALETTE.goldFoil,
+      mode: 0.25
     });
 
     // Galileo Experiment Props: Geological Hammer & Falcon Feather resting in the dust!
@@ -1659,7 +1732,7 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     addComicBeaconAura(mb);
 
   } else if (key === 'apollo16') {
-    // 4. APOLLO 16: "Orion" Descent Stage + Gold Far-UV Cosmic Telescope on Tripod + Highlands Boulder
+    // 4. APOLLO 16: Detailed "Orion" Descent Stage (Ladder, Engine Bell, RCS, MESA) + Gold S-201 Far-UV Telescope
     mb.addPart(makeCylinderGeometry(0.22, 0.24, 0.19, 8), {
       translate: [-0.14, 0.19, -0.06],
       color: PALETTE.goldFoil,
@@ -1671,6 +1744,16 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       color: PALETTE.deepOrange,
       mode: 0.20
     });
+    // Descent Engine Bell & Upper Hatch Ring
+    mb.addPart(makeConeGeometry(0.085, 0.12, 14), {
+      translate: [-0.14, 0.08, -0.06],
+      color: PALETTE.darkSteel
+    });
+    mb.addPart(makeCylinderGeometry(0.15, 0.17, 0.04, 8), {
+      translate: [-0.14, 0.295, -0.06],
+      color: PALETTE.slateMetal
+    });
+    // 4 Landing Legs + Ladder on Front Leg
     for (let i = 0; i < 4; i++) {
       const angle = (i * Math.PI) / 2 + Math.PI / 4;
       const leg = new MeshBuilder();
@@ -1680,6 +1763,18 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
         color: PALETTE.goldFoil,
         mode: 0.25
       });
+      leg.addPart(makeCylinderGeometry(0.008, 0.008, 0.18, 6), {
+        translate: [0.16, 0.19, 0],
+        rotate: [0, 0, -1.15],
+        color: PALETTE.slateMetal
+      });
+      if (i === 0) {
+        leg.addPart(makeBoxGeometry(0.015, 0.22, 0.055), {
+          translate: [0.23, 0.14, 0],
+          rotate: [0, 0, -0.58],
+          color: PALETTE.whiteHull
+        });
+      }
       leg.addPart(makeCylinderGeometry(0.055, 0.065, 0.02, 12), {
         translate: [0.31, 0.01, 0],
         color: PALETTE.goldFoil,
@@ -1688,26 +1783,30 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       mb.addGroup(leg, { translate: [-0.14, 0, -0.06], rotate: [0, angle, 0] });
     }
 
-    // Gold-Plated S-201 Far-UV Telescope on Tripod in Foreground Right
+    // Gold-Plated S-201 Far-UV Schmidt Camera Telescope on Braced Tripod
     const uvScope = new MeshBuilder();
     for (let i = 0; i < 3; i++) {
       const a = (i * Math.PI * 2) / 3;
       const leg = new MeshBuilder();
-      leg.addPart(makeCylinderGeometry(0.01, 0.01, 0.20, 8), {
-        translate: [0.06, 0.08, 0],
+      leg.addPart(makeCylinderGeometry(0.01, 0.01, 0.22, 8), {
+        translate: [0.06, 0.09, 0],
         rotate: [0, 0, -0.45],
         color: PALETTE.whiteHull
       });
       uvScope.addGroup(leg, { rotate: [0, a, 0] });
     }
-    uvScope.addPart(makeCylinderGeometry(0.052, 0.06, 0.17, 12), {
-      translate: [0, 0.21, 0],
+    uvScope.addPart(makeBoxGeometry(0.07, 0.05, 0.07), {
+      translate: [0, 0.16, 0],
+      color: PALETTE.slateMetal
+    });
+    uvScope.addPart(makeCylinderGeometry(0.056, 0.064, 0.19, 14), {
+      translate: [0, 0.22, 0],
       rotate: [-0.45, 0.3, 0],
       color: PALETTE.goldFoil,
       mode: 0.25
     });
-    uvScope.addPart(makeCylinderGeometry(0.04, 0.04, 0.04, 12), {
-      translate: [0.02, 0.28, 0.05],
+    uvScope.addPart(makeCylinderGeometry(0.044, 0.044, 0.045, 12), {
+      translate: [0.025, 0.295, 0.055],
       rotate: [-0.45, 0.3, 0],
       color: PALETTE.laserCyan,
       mode: 0.80
@@ -1715,7 +1814,7 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     mb.addGroup(uvScope, { translate: [0.30, 0.01, 0.20] });
 
     // Descartes Highlands White Anorthosite Boulder ("Big Muley")
-    mb.addPart(makeSphereGeometry(0.075, 10, 10), {
+    mb.addPart(makeSphereGeometry(0.08, 10, 10), {
       translate: [-0.38, 0.05, 0.26],
       scale: [1.2, 0.8, 1.0],
       color: PALETTE.whiteHull
@@ -1724,7 +1823,7 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     addComicBeaconAura(mb);
 
   } else if (key === 'apollo17') {
-    // 5. APOLLO 17: "Challenger" Lander + LRV-3 + Orange Volcanic Soil Crater + ALSEP Station
+    // 5. APOLLO 17: Detailed "Challenger" Lander + Full LRV-3 + Orange Volcanic Glass Crater + ALSEP
     mb.addPart(makeCylinderGeometry(0.22, 0.24, 0.19, 8), {
       translate: [-0.16, 0.19, -0.06],
       color: PALETTE.goldFoil,
@@ -1736,6 +1835,14 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       color: PALETTE.deepOrange,
       mode: 0.20
     });
+    mb.addPart(makeConeGeometry(0.085, 0.12, 14), {
+      translate: [-0.16, 0.08, -0.06],
+      color: PALETTE.darkSteel
+    });
+    mb.addPart(makeCylinderGeometry(0.15, 0.17, 0.04, 8), {
+      translate: [-0.16, 0.295, -0.06],
+      color: PALETTE.slateMetal
+    });
     for (let i = 0; i < 4; i++) {
       const angle = (i * Math.PI) / 2 + Math.PI / 4;
       const leg = new MeshBuilder();
@@ -1745,6 +1852,13 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
         color: PALETTE.goldFoil,
         mode: 0.25
       });
+      if (i === 0) {
+        leg.addPart(makeBoxGeometry(0.015, 0.22, 0.055), {
+          translate: [0.23, 0.14, 0],
+          rotate: [0, 0, -0.58],
+          color: PALETTE.whiteHull
+        });
+      }
       leg.addPart(makeCylinderGeometry(0.055, 0.065, 0.02, 12), {
         translate: [0.31, 0.01, 0],
         color: PALETTE.goldFoil,
@@ -1753,28 +1867,65 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       mb.addGroup(leg, { translate: [-0.16, 0, -0.06], rotate: [0, angle, 0] });
     }
 
-    // LRV-3 Parked in Foreground Right
+    // Detailed LRV-3 Parked in Foreground Right (Seats, Console, Dish, TV Cam, 4 Fenders)
     const lrv3 = new MeshBuilder();
-    lrv3.addPart(makeBoxGeometry(0.36, 0.035, 0.22), {
-      translate: [0, 0.09, 0],
+    lrv3.addPart(makeBoxGeometry(0.38, 0.035, 0.22), {
+      translate: [0, 0.095, 0],
       color: PALETTE.slateMetal
     });
-    lrv3.addPart(makeConeGeometry(0.09, 0.05, 14, true), {
-      translate: [0.13, 0.26, -0.05],
+    lrv3.addPart(makeBoxGeometry(0.11, 0.065, 0.20), {
+      translate: [0.14, 0.125, 0],
+      color: PALETTE.goldFoil,
+      mode: 0.25
+    });
+    for (const sz of [0.055, -0.055]) {
+      lrv3.addPart(makeBoxGeometry(0.09, 0.022, 0.08), {
+        translate: [-0.02, 0.12, sz],
+        color: PALETTE.whiteHull
+      });
+      lrv3.addPart(makeBoxGeometry(0.022, 0.09, 0.08), {
+        translate: [-0.06, 0.165, sz],
+        rotate: [0, 0, 0.2],
+        color: PALETTE.deepOrange,
+        mode: 0.20
+      });
+    }
+    lrv3.addPart(makeCylinderGeometry(0.007, 0.007, 0.16, 8), {
+      translate: [0.14, 0.21, -0.05],
+      color: PALETTE.whiteHull
+    });
+    lrv3.addPart(makeConeGeometry(0.095, 0.052, 16, true), {
+      translate: [0.14, 0.29, -0.05],
       rotate: [0, 0, -0.4],
       color: PALETTE.goldFoil,
       mode: 0.25
     });
+    lrv3.addPart(makeBoxGeometry(0.05, 0.04, 0.04), {
+      translate: [0.14, 0.19, 0.06],
+      color: PALETTE.laserCyan,
+      mode: 0.80
+    });
     [
-      [0.12, 0.13],
-      [0.12, -0.13],
-      [-0.12, 0.13],
-      [-0.12, -0.13]
+      [0.13, 0.135],
+      [0.13, -0.135],
+      [-0.13, 0.135],
+      [-0.13, -0.135]
     ].forEach(([wx, wz]) => {
-      lrv3.addPart(makeCylinderGeometry(0.058, 0.058, 0.04, 14), {
-        translate: [wx, 0.058, wz],
+      lrv3.addPart(makeCylinderGeometry(0.06, 0.06, 0.042, 14), {
+        translate: [wx, 0.06, wz],
         rotate: [Math.PI / 2, 0, 0],
         color: PALETTE.darkSteel
+      });
+      lrv3.addPart(makeCylinderGeometry(0.032, 0.032, 0.046, 10), {
+        translate: [wx, 0.06, wz],
+        rotate: [Math.PI / 2, 0, 0],
+        color: PALETTE.goldFoil,
+        mode: 0.25
+      });
+      lrv3.addPart(makeBoxGeometry(0.11, 0.015, 0.05), {
+        translate: [wx, 0.125, wz],
+        color: PALETTE.deepOrange,
+        mode: 0.20
       });
     });
     mb.addGroup(lrv3, {
@@ -1782,7 +1933,7 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       rotate: [0, 0.55, 0]
     });
 
-    // Shorty Crater Glowing Orange Volcanic Glass Patch + ALSEP Central Station
+    // Shorty Crater Glowing Orange Volcanic Glass Patch + ALSEP Central Station & RTG
     mb.addPart(makeCylinderGeometry(0.18, 0.22, 0.025, 18), {
       translate: [0.06, 0.012, 0.34],
       color: PALETTE.deepOrange,
@@ -1791,6 +1942,10 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     mb.addPart(makeBoxGeometry(0.11, 0.09, 0.11), {
       translate: [-0.46, 0.05, 0.24],
       color: PALETTE.whiteHull
+    });
+    mb.addPart(makeCylinderGeometry(0.028, 0.028, 0.09, 10), {
+      translate: [-0.46, 0.05, 0.36],
+      color: PALETTE.darkSteel
     });
     mb.addPart(makeCylinderGeometry(0.01, 0.01, 0.26, 8), {
       translate: [-0.46, 0.18, 0.24],
@@ -1801,19 +1956,23 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     addComicBeaconAura(mb);
 
   } else if (key === 'lcross_blueghost' || key === 'lcross') {
-    // 6. LCROSS & CENTAUR: Dramatic Polar Crater Impact Monument + Shepherding Spacecraft + Ice Plume!
-    mb.addPart(makeTorusGeometry(0.34, 0.065, 12, 24), {
+    // 6. LCROSS & CENTAUR: Detailed Polar Crater Impact Monument + Centaur Upper Stage + Shepherding Satellite + Ice Plume!
+    mb.addPart(makeTorusGeometry(0.35, 0.065, 12, 24), {
       translate: [0, 0.03, 0],
       rotate: [Math.PI / 2, 0, 0],
       color: PALETTE.slateMetal
     });
 
-    // Centaur Upper-Stage Rocket Cylinder embedded at dramatic angle inside Cabeus Crater
+    // Centaur Upper-Stage Rocket Cylinder with Engine Bell, Propellant Ribs & Avionics Ring
     const centaurGroup = new MeshBuilder();
     centaurGroup.addPart(makeCylinderGeometry(0.11, 0.11, 0.44, 16), {
       color: PALETTE.whiteHull
     });
-    centaurGroup.addPart(makeCylinderGeometry(0.114, 0.114, 0.09, 16), {
+    centaurGroup.addPart(makeCylinderGeometry(0.116, 0.116, 0.04, 16), {
+      translate: [0, -0.12, 0],
+      color: PALETTE.slateMetal
+    });
+    centaurGroup.addPart(makeCylinderGeometry(0.115, 0.115, 0.09, 16), {
       translate: [0, 0.08, 0],
       color: PALETTE.deepOrange,
       mode: 0.20
@@ -1827,18 +1986,22 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
       rotate: [0.15, 0.20, -0.42]
     });
 
-    // LCROSS Shepherding Spacecraft Octagonal Ring & Solar Wings hovering in the plume
+    // LCROSS Shepherding Spacecraft Octagonal Bus + Dual Solar Wings + S-Band Dish + IR Spectrometer Optics
     const lcrossSat = new MeshBuilder();
-    lcrossSat.addPart(makeCylinderGeometry(0.12, 0.12, 0.09, 8), {
+    lcrossSat.addPart(makeCylinderGeometry(0.12, 0.12, 0.095, 8), {
       color: PALETTE.goldFoil,
       mode: 0.25
     });
-    lcrossSat.addPart(makeBoxGeometry(0.46, 0.016, 0.11), {
+    lcrossSat.addPart(makeBoxGeometry(0.48, 0.016, 0.115), {
       color: PALETTE.skySolar,
       mode: 0.35
     });
-    lcrossSat.addPart(makeSphereGeometry(0.04, 12, 12), {
-      translate: [0, -0.06, 0],
+    lcrossSat.addPart(makeConeGeometry(0.065, 0.04, 14, true), {
+      translate: [0, 0.08, 0],
+      color: PALETTE.whiteHull
+    });
+    lcrossSat.addPart(makeSphereGeometry(0.042, 12, 12), {
+      translate: [0, -0.065, 0],
       color: PALETTE.laserCyan,
       mode: 0.80
     });
@@ -1936,57 +2099,92 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
     addComicBeaconAura(mb);
 
   } else if (key === 'sojourner') {
-    // SOJOURNER & PATHFINDER: 3 Unfolded Solar Petals + 6-Wheeled Micro-Rover + "Barnacle Bill" Rock
+    // SOJOURNER & PATHFINDER: 3 Detailed Unfolded Solar Petals + IMP Mast + 6-Wheeled Rocker-Bogie Rover + APXS + Barnacle Bill
     for (let i = 0; i < 3; i++) {
       const a = (i * Math.PI * 2) / 3 + 0.3;
       const petal = new MeshBuilder();
-      petal.addPart(makeCylinderGeometry(0.20, 0.22, 0.02, 3), {
-        translate: [0.24, 0.015, 0],
+      petal.addPart(makeCylinderGeometry(0.21, 0.23, 0.022, 3), {
+        translate: [0.24, 0.016, 0],
         color: PALETTE.skySolar,
         mode: 0.35
       });
+      petal.addPart(makeBoxGeometry(0.18, 0.026, 0.02), {
+        translate: [0.22, 0.018, 0],
+        color: PALETTE.goldFoil,
+        mode: 0.25
+      });
       mb.addGroup(petal, { translate: [-0.14, 0, -0.08], rotate: [0, a, 0] });
     }
-    mb.addPart(makeCylinderGeometry(0.02, 0.022, 0.34, 10), {
-      translate: [-0.14, 0.18, -0.08],
+    // Central Lander Deck, Gold Electronics Box & IMP Stereo Mast
+    mb.addPart(makeCylinderGeometry(0.11, 0.12, 0.035, 3), {
+      translate: [-0.14, 0.03, -0.08],
+      color: PALETTE.goldFoil,
+      mode: 0.25
+    });
+    mb.addPart(makeCylinderGeometry(0.02, 0.024, 0.36, 10), {
+      translate: [-0.14, 0.19, -0.08],
       color: PALETTE.whiteHull
     });
-    mb.addPart(makeBoxGeometry(0.08, 0.05, 0.055), {
-      translate: [-0.14, 0.36, -0.08],
+    mb.addPart(makeBoxGeometry(0.095, 0.055, 0.06), {
+      translate: [-0.14, 0.38, -0.08],
       color: PALETTE.goldFoil,
       mode: 0.25
+    });
+    mb.addPart(makeSphereGeometry(0.018, 8, 8), {
+      translate: [-0.11, 0.38, -0.05],
+      color: PALETTE.laserCyan,
+      mode: 0.80
     });
 
-    // 6-Wheeled Sojourner Rover in Foreground Right
+    // Detailed 6-Wheeled Sojourner Micro-Rover with Rocker-Bogie Suspension, APXS & Whip Antenna
     const soj = new MeshBuilder();
-    soj.addPart(makeBoxGeometry(0.26, 0.07, 0.18), {
-      translate: [0, 0.085, 0],
+    soj.addPart(makeBoxGeometry(0.27, 0.072, 0.19), {
+      translate: [0, 0.09, 0],
       color: PALETTE.goldFoil,
       mode: 0.25
     });
-    soj.addPart(makeBoxGeometry(0.28, 0.018, 0.20), {
-      translate: [0, 0.13, 0],
+    soj.addPart(makeBoxGeometry(0.29, 0.018, 0.21), {
+      translate: [0, 0.135, 0],
       color: PALETTE.skySolar,
       mode: 0.35
     });
-    for (const wx of [-0.10, 0, 0.10]) {
-      for (const wz of [-0.105, 0.105]) {
-        soj.addPart(makeCylinderGeometry(0.04, 0.04, 0.03, 12), {
-          translate: [wx, 0.04, wz],
+    // Rocker-Bogie Struts & 6 Wheels with Gold Hubs
+    for (const wz of [-0.11, 0.11]) {
+      soj.addPart(makeBoxGeometry(0.22, 0.014, 0.014), {
+        translate: [0, 0.065, wz * 0.88],
+        color: PALETTE.slateMetal
+      });
+    }
+    for (const wx of [-0.105, 0, 0.105]) {
+      for (const wz of [-0.115, 0.115]) {
+        soj.addPart(makeCylinderGeometry(0.042, 0.042, 0.032, 12), {
+          translate: [wx, 0.042, wz],
           rotate: [Math.PI / 2, 0, 0],
           color: PALETTE.darkSteel
         });
+        soj.addPart(makeCylinderGeometry(0.022, 0.022, 0.036, 10), {
+          translate: [wx, 0.042, wz],
+          rotate: [Math.PI / 2, 0, 0],
+          color: PALETTE.goldFoil,
+          mode: 0.25
+        });
       }
     }
-    soj.addPart(makeCylinderGeometry(0.02, 0.02, 0.07, 10), {
-      translate: [0.16, 0.07, 0],
+    // Rear APXS Spectrometer Arm & Whip Antenna
+    soj.addPart(makeCylinderGeometry(0.022, 0.022, 0.075, 10), {
+      translate: [0.165, 0.07, 0],
       rotate: [0, 0, Math.PI / 2],
       color: PALETTE.laserCyan,
       mode: 0.80
     });
+    soj.addPart(makeCylinderGeometry(0.005, 0.006, 0.18, 6), {
+      translate: [-0.10, 0.22, -0.06],
+      color: PALETTE.whiteHull
+    });
     mb.addGroup(soj, { translate: [0.16, 0.01, 0.16], rotate: [0, -0.25, 0] });
 
-    mb.addPart(makeSphereGeometry(0.085, 10, 10), {
+    // "Barnacle Bill" Martian Rock
+    mb.addPart(makeSphereGeometry(0.088, 10, 10), {
       translate: [0.38, 0.06, 0.10],
       scale: [1.1, 0.85, 1.1],
       color: PALETTE.deepOrange,
