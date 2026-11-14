@@ -252,6 +252,30 @@
 
         <!-- Visual 3D Drag & Full Globe Coachmark (Inside Right Dock — Never blocks bottom-center!) -->
         <div id="tutorial-3d-coachmark" class="tutorial-coachmark tutorial-dock-coachmark">
+          <div class="tutorial-3d-gizmo" aria-hidden="true">
+            <svg viewBox="0 0 110 76" class="gizmo-svg">
+              <defs>
+                <marker id="arrowCyan" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+                </marker>
+                <marker id="arrowMuted" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8" />
+                </marker>
+              </defs>
+              <ellipse cx="55" cy="42" rx="40" ry="15" fill="none" stroke="rgba(56,189,248,0.4)" stroke-width="1.5" stroke-dasharray="4 3" />
+              <path d="M 14 42 Q 55 62 96 42" fill="none" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrowCyan)" marker-end="url(#arrowCyan)" />
+              <line x1="55" y1="68" x2="55" y2="10" stroke="#94a3b8" stroke-width="1.75" marker-start="url(#arrowMuted)" marker-end="url(#arrowMuted)" />
+              <text x="61" y="16" fill="#cbd5e1" font-size="8" font-family="JetBrains Mono, monospace">3D AXIS</text>
+            </svg>
+            <div class="Animated-hand-icon" title="Drag left/right &amp; scroll to zoom">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f8fafc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2" />
+                <path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2" />
+                <path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8" />
+                <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+              </svg>
+            </div>
+          </div>
           <div class="tutorial-coachmark-text">
             <strong>3D Controls:</strong> Drag to orbit · Scroll to zoom · Hover the <strong>bottom edge</strong> to center the full globe.
           </div>

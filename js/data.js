@@ -7,23 +7,23 @@ export const REALMS = {
   moon: {
     id: 'moon',
     label: 'Moon',
-    subtitle: 'COMIC 3D LUNAR HORIZON',
+    subtitle: '3D Lunar Horizon',
     mapTitle: 'Lunar Artifact Map',
-    badge: 'NASA ARCHIVE // SILENT MONUMENTS OF THE MOON'
+    badge: 'NASA Archive · Moon'
   },
   mars: {
     id: 'mars',
     label: 'Mars',
-    subtitle: 'COMIC 3D MARTIAN HORIZON',
+    subtitle: '3D Martian Horizon',
     mapTitle: 'Martian Artifact Map',
-    badge: 'NASA ARCHIVE // SILENT EXPLORERS OF MARS'
+    badge: 'NASA Archive · Mars'
   },
   universe: {
     id: 'universe',
     label: 'Universe',
-    subtitle: 'COMIC 3D FREE-FLIGHT SPACECRAFT',
+    subtitle: '3D Deep Space',
     mapTitle: 'Deep Space Trajectory Map',
-    badge: 'NASA ARCHIVE // VOYAGERS OF THE UNIVERSE'
+    badge: 'NASA Archive · Universe'
   }
 };
 

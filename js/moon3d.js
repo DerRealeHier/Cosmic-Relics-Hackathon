@@ -3266,7 +3266,7 @@ export class Horizon3DEngine {
         if (!this.manualGlobeLock) {
           if (e.clientY >= window.innerHeight * 0.85 && !overHudCard) {
             this.setFullGlobeMode(true, false);
-          } else if (e.clientY <= window.innerHeight * 0.52) {
+          } else if (e.clientY <= window.innerHeight * 0.25) {
             this.setFullGlobeMode(false, false);
           }
         }
