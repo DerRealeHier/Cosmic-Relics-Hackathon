@@ -49,7 +49,7 @@ export const NASA_ARTIFACTS = [
     imageId: 'as11-40-5948',
     imageCredit: 'NASA / JSC',
     kidFunFact: '🤯 Cool Space Fact: Lasers from Earth still bounce off Apollo 11’s mirror almost every night — proving the Moon moves 3.8 cm away from us each year (as fast as your fingernails grow)!',
-    shortSummary: 'In July 1969, Neil Armstrong and Buzz Aldrin made humanity’s first Moon landing here. When they blasted off home, they left their golden "Eagle" landing base and a special laser mirror behind — which still bounces laser beams back to Earth today!',
+    shortSummary: 'The Apollo 11 Lunar Module was called Eagle. It was the first spacecraft to land people on the Moon. It carried two astronauts to the Moon and also brought scientific equipment to study its surface. The equipment was left behind on the Moon.',
     gallery: [
       {
         src: 'assets/nasa/missions/apollo11-easep-as11-40-5948.jpg',
@@ -73,10 +73,10 @@ export const NASA_ARTIFACTS = [
     sourceTitle: 'NASA — Apollo 11 Mission & Lunar Laser Ranging',
     sourceUrl: 'https://www.nasa.gov/mission/apollo-11/',
     story: [
-      '"For more than fifty-five years I have stood here alone in the dark basalt dust of the Sea of Tranquility. On July 21, 1969, when Neil Armstrong and Buzz Aldrin fired the ascent engine and blasted off from my shoulders, I stayed behind as humanity’s first permanent foothold on another world."',
-      '"Around me there is no wind, no rain, and no sound—only the vacuum of space and the blinding sun rising every 29.5 Earth days. Yet I am never truly forgotten: just twenty meters away rests my silent glass companion, the Laser Ranging Retroreflector."',
-      '"Almost every clear night, observatories on Earth fire pulses of laser light across 384,400 kilometers of space right at our 100 fused-silica corner-cube prisms. Requiring zero battery power, we bounce those photons straight back in 2.5 seconds—revealing that the Moon is slowly spiraling away from Earth by 3.8 centimeters every year."',
-      '"Stamped onto my front landing strut is a stainless-steel plaque signed by the crew: Here men from the planet Earth first set foot upon the Moon, July 1969, A.D. We came in peace for all mankind."'
+      'In July 1969, NASA sent the Apollo 11 mission to the Moon. The goal was to land people on the Moon for the first time. The Lunar Module, called Eagle, was the spacecraft that took two astronauts, Neil Armstrong and Buzz Aldrin, down to the Moon. A third astronaut, Michael Collins, stayed in another spacecraft orbiting the Moon.',
+      'Eagle landed on 20 July 1969 in an area called the Sea of Tranquility. After landing, Neil Armstrong and Buzz Aldrin stepped out onto the Moon’s surface and set up scientific experiments (EASEP) right beside the lander.',
+      'When they fired the ascent engine and blasted off home, Eagle’s golden descent base and the Laser Ranging Retroreflector stayed behind as humanity’s first permanent foothold on another world. Almost every clear night, observatories on Earth fire laser pulses across 384,400 kilometers of space right at our 100 fused-silica corner-cube prisms — bouncing photons back in 2.5 seconds and revealing that the Moon moves 3.8 cm away from Earth every year.',
+      'Stamped onto the front landing strut is a stainless-steel plaque signed by the crew: "Here men from the planet Earth first set foot upon the Moon, July 1969, A.D. We came in peace for all mankind."'
     ],
     tech: {
       hardware: 'Lunar Module LM-5 "Eagle" Descent Stage + EASEP Instruments',
@@ -154,8 +154,8 @@ export const NASA_ARTIFACTS = [
     realm: 'moon',
     code: 'APOLLO 15',
     year: '1971',
-    title: 'Apollo 15: First Electric Moon Car (LRV-1) & Falcon Feather',
-    region: 'Hadley–Apennine',
+    title: 'Apollo 15: Lunar Module "Falcon" & First Moon Rover (LRV-1)',
+    region: 'Mare Imbrium (Hadley–Apennine)',
     coords: '26.1324° N, 3.6333° E',
     mapX: 165,
     mapY: 74,
@@ -167,7 +167,7 @@ export const NASA_ARTIFACTS = [
     imageId: 'as15-85-11471',
     imageCredit: 'NASA / JSC',
     kidFunFact: '🪶 Cool Space Fact: On live TV, Astronaut Dave Scott dropped a heavy hammer and a falcon feather at the same time — with zero air on the Moon, both hit the ground at the exact same instant!',
-    shortSummary: 'Apollo 15 unpacked the very first electric Moon car (with wire-mesh tires instead of air!) and drove 27.8 km along giant lunar mountains, finding a 4.1-billion-year-old crystal rock from the infant Moon.',
+    shortSummary: 'The Apollo 15 Lunar Module was called Falcon. It was the fourth spacecraft to land people on the Moon. It carried two astronauts, David Scott and James Irwin, to the lunar surface. It also brought a Moon rover and scientific equipment to explore the Moon and learn more about it.',
     gallery: [
       {
         src: 'assets/nasa/missions/apollo15-alsep-as15-85-11471.jpg',
@@ -191,21 +191,24 @@ export const NASA_ARTIFACTS = [
     sourceTitle: 'NASA — Apollo 15 Mission',
     sourceUrl: 'https://www.nasa.gov/mission/apollo-15/',
     story: [
-      '"I am the very first car ever driven on another world! Folded up like a lawn chair inside the side bay of Lunar Module Falcon, I was unpacked by David Scott and James Irwin at the foot of the towering 4,500-meter Apennine Mountains."',
-      '"My tires are not made of rubber filled with air—they would have burst or frozen solid in the lunar vacuum. Instead, I roll on hollow wheels woven from zinc-coated piano wire with titanium chevron treads, powered by four independent quarter-horsepower electric hub motors."',
-      '"Over three days we drove 27.8 kilometers along the winding canyon rim of Hadley Rille and up the slopes of Mons Hadley Delta, where the crew discovered the 4.1-billion-year-old Genesis Rock—a piece of the Moon’s primordial crust."',
-      '"Before blasting off, Dave Scott parked me with my color TV camera aimed at Falcon. Through my lens, millions of people on Earth watched him drop a geologic hammer and a falcon feather at the exact same moment—both hitting the lunar dust simultaneously and proving Galileo right after 400 years!"'
+      'In July 1971, NASA sent the Apollo 15 mission to the Moon. The Lunar Module, called Falcon, carried two astronauts, David Scott and James Irwin, down to the Moon. A third astronaut, Alfred Worden, stayed in another spacecraft orbiting the Moon.',
+      'Falcon landed on 30 July 1971 in an area called Mare Imbrium, near the Apennine Mountains. This mission was special because it was the first time astronauts used a vehicle called the Lunar Roving Vehicle (LRV), or Moon rover. It allowed them to travel much further across the Moon and explore places that were too far away to reach on foot.',
+      'During three walks on the Moon, Scott and Irwin travelled about 27.9 kilometres using the rover. They collected Moon rocks and soil, took photographs and explored several craters. In total, they collected 77.31 kg of Moon rocks and soil.',
+      'But the astronauts didn’t just go to the Moon to explore. Scientists also wanted to learn more about the Moon. That’s why Falcon carried scientific equipment called ALSEP (Apollo Lunar Surface Experiments Package). The astronauts set up instruments to measure moonquakes, study the Moon’s magnetic field, measure particles coming from the Sun, detect Moon dust, and measure how heat moves from inside the Moon towards its surface.',
+      'The equipment was powered by a special generator and sent the collected information back to Earth. It continued working for several years, until 30 September 1977, when it was switched off. After spending about 66 hours and 55 minutes on the Moon, Scott and Irwin climbed back into Falcon and used its upper part to fly back into space to meet Alfred Worden, leaving the lower part of Falcon behind on the Moon.'
     ],
     tech: {
-      hardware: 'Lunar Roving Vehicle LRV-1 + LM-10 "Falcon" Descent Stage + ALSEP',
-      mass: '210 kg empty rover mass (carried 490 kg of astronauts, gear & rocks)',
-      dimensions: '3.10 m length × 1.83 m width × 1.14 m height',
-      survival: 'Parked ~100 meters east of Falcon’s descent stage. Its silver-zinc batteries are long depleted, while the nearby 300-prism Laser Retroreflector remains active today.'
+      hardware: 'Lunar Module LM-10 "Falcon" + Lunar Roving Vehicle (LRV-1) + ALSEP',
+      mass: '16,430 kg (Launch Mass) · 210 kg empty LRV-1',
+      dimensions: 'Launch Date: 1971-07-26 · Launch Vehicle: Saturn V · Cape Canaveral, United States',
+      survival: 'ALSEP operated until 30 September 1977; Falcon’s descent stage, LRV-1, and the 300-prism Laser Retroreflector remain on the Moon.'
     },
     science: [
-      'Discovery of the "Genesis Rock" (Sample 15415): A pristine crystalline anorthosite dated to ~4.1 billion years ago, proving the infant Moon once had a global magma ocean.',
-      'Galileo’s Equivalence Principle in Vacuum: Live television demonstration confirming that a 1.32 kg aluminum hammer and a 0.03 kg falcon feather accelerate identically in the absence of air resistance.',
-      'Largest Lunar Laser Retroreflector & Heat Flow Probes: Placed a 300-prism reflector array (still the brightest optical target on the Moon) and drilled subsurface temperature probes into the regolith.'
+      'Measure Moonquakes: Passive Seismic Experiment recorded lunar tremors and meteorite impacts.',
+      'Measure Magnetic Field: Lunar Surface Magnetometer mapped local crustal magnetism around Hadley Rille.',
+      'Measure Particles Coming from the Sun: Solar Wind Spectrometer studied charged particles streaming from the Sun.',
+      'Detect Moon Dust: Suprathermal Ion & Dust Detectors monitored electrostatic dust movement.',
+      'Measure Heat from the Core: Heat Flow Experiment drilled probes to track how heat moves from inside the Moon toward its surface.'
     ]
   },
   {
