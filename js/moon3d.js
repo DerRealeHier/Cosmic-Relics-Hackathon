@@ -2671,6 +2671,8 @@ export class Horizon3DEngine {
     this.realmTextures = {};
 
     this.monumentMeshes = {};
+    this.monumentGeoms = {};
+    this.customGlbGeom = null;
     this.rafId = 0;
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -2738,6 +2740,7 @@ export class Horizon3DEngine {
     ];
     allIds.forEach((id) => {
       const geom = buildDetailedArtifactMesh(id);
+      this.monumentGeoms[id] = geom;
       this.monumentMeshes[id] = this._uploadMonumentGeometry(geom);
     });
   }
@@ -2865,6 +2868,7 @@ export class Horizon3DEngine {
         addBeaconAura: spec.aura,
         centerY: spec.centerY
       });
+      this.monumentGeoms[id] = parsed;
       this.monumentMeshes[id] = this._uploadMonumentGeometry(parsed);
       this._officialLoaded.add(id);
       if (this.artifactId === id) {
@@ -2885,6 +2889,7 @@ export class Horizon3DEngine {
       this.onStatusChange(`Loading ${file.name}…`);
       const buf = await file.arrayBuffer();
       const parsed = await parseGlbBuffer(buf);
+      this.customGlbGeom = parsed;
       this.customGlbMesh = this._uploadMonumentGeometry(parsed);
       this.onStatusChange(`3D Model: ${file.name} Active ✓`);
       this.onGlbLoaded(file.name);
@@ -2895,6 +2900,17 @@ export class Horizon3DEngine {
       this.onStatusChange('Error loading .glb file');
       return false;
     }
+  }
+
+  getActiveMonumentGeom() {
+    if (this.customGlbGeom) {
+      return { geom: this.customGlbGeom, isOfficial: false, isCustom: true };
+    }
+    return {
+      geom: this.monumentGeoms[this.artifactId] || this.monumentGeoms.apollo11 || null,
+      isOfficial: Boolean(this._officialLoaded?.has(this.artifactId)),
+      isCustom: false
+    };
   }
 
   setRealm(realm) {
@@ -3097,23 +3113,27 @@ export class Horizon3DEngine {
     const planetScale = 0.56 * (1.0 - g) + 0.21 * g; // 0.56 (horizon) -> 0.21 (centered full globe, radius ~1.09)
     const planetCenterY = -3.72 * (1.0 - g) - 0.05 * g;
 
-    // Monument coordinates sitting on top of the planet ridge [0.85, 5.14, 0.55] from sphere center
-    const ridgeX = 0.85 * planetScale;
-    const ridgeY = planetCenterY + 5.14 * planetScale;
-    const ridgeZ = 0.55 * planetScale;
+    // Monument local coordinates sitting on top of the planet ridge [0.85, 5.14, 0.55]
+    const planetModel = mat4FromTranslationRotationScale(
+      0.0,
+      planetCenterY,
+      0.0,
+      this.currentRotX * 0.45 * g,
+      this.currentRotY,
+      0.0,
+      planetScale
+    );
+    const ridgeX = planetModel[0] * 0.85 + planetModel[4] * 5.14 + planetModel[8] * 0.55 + planetModel[12];
+    const ridgeY = planetModel[1] * 0.85 + planetModel[5] * 5.14 + planetModel[9] * 0.55 + planetModel[13];
+    const ridgeZ = planetModel[2] * 0.85 + planetModel[6] * 5.14 + planetModel[10] * 0.55 + planetModel[14];
+
+    const beaconX = planetModel[0] * 0.85 + planetModel[4] * 5.49 + planetModel[8] * 0.55 + planetModel[12];
+    const beaconY = planetModel[1] * 0.85 + planetModel[5] * 5.49 + planetModel[9] * 0.55 + planetModel[13];
+    const beaconZ = planetModel[2] * 0.85 + planetModel[6] * 5.49 + planetModel[10] * 0.55 + planetModel[14];
 
     // 1. Draw Comic Horizon / Centered Full Sphere ONLY in Moon & Mars modes!
     // In Universe mode, there is NO planet below — the 3D spacecraft flies freely through space!
     if (this.realm !== 'universe') {
-      const planetModel = mat4FromTranslationRotationScale(
-        0.0,
-        planetCenterY,
-        0.0,
-        this.currentRotX * 0.45 * g,
-        this.currentRotY,
-        0.0,
-        planetScale
-      );
       const planetNormalMat = mat3FromMat4(planetModel);
 
       gl.useProgram(this.planetProg);
@@ -3121,7 +3141,7 @@ export class Horizon3DEngine {
       gl.uniformMatrix4fv(this.planetLocs.uView, false, view);
       gl.uniformMatrix4fv(this.planetLocs.uModel, false, planetModel);
       gl.uniformMatrix3fv(this.planetLocs.uNormalMatrix, false, planetNormalMat);
-      gl.uniform3f(this.planetLocs.uBeaconPos, ridgeX, ridgeY + 0.35 * planetScale, ridgeZ);
+      gl.uniform3f(this.planetLocs.uBeaconPos, beaconX, beaconY, beaconZ);
 
       const activeTex = this.realmTextures[this.realm] || this.realmTextures.moon;
       if (activeTex) {
@@ -3152,31 +3172,32 @@ export class Horizon3DEngine {
       let mx = ridgeX;
       let my = ridgeY;
       let mz = ridgeZ;
-      let rx = 0.0;
-      let ry = this.reducedMotion ? 0.25 : Math.sin(now * 0.0008) * 0.55;
-      let rz = -0.14;
-      let renderScale = this.monumentScale * planetScale * (0.98 - 0.16 * g);
+      let monModel;
 
       if (this.realm === 'universe') {
         const t = this.reducedMotion ? 0.5 : now * 0.00065;
         mx = 0.0 + Math.sin(t) * 1.15;
         my = 0.10 + Math.sin(t * 2.0) * 0.36;
         mz = 0.65 + Math.cos(t * 1.3) * 0.45;
-        rx = 0.18 + Math.sin(t * 1.5) * 0.18 + this.currentRotX;
-        ry = this.currentRotY + Math.cos(t * 0.85) * 0.65;
-        rz = -0.16 * Math.cos(t); // Dynamic banking into turns!
-        renderScale = this.monumentScale * 0.92;
+        const rx = 0.18 + Math.sin(t * 1.5) * 0.18 + this.currentRotX;
+        const ry = this.currentRotY + Math.cos(t * 0.85) * 0.65;
+        const rz = -0.16 * Math.cos(t); // Dynamic banking into turns!
+        const renderScale = this.monumentScale * 0.92;
+        monModel = mat4FromTranslationRotationScale(mx, my, mz, rx, ry, rz, renderScale);
+      } else {
+        const localSpin = this.reducedMotion ? 0.25 : Math.sin(now * 0.0008) * 0.35;
+        const renderScale = this.monumentScale * planetScale * (0.98 - 0.16 * g);
+        const localMon = mat4FromTranslationRotationScale(
+          0.85,
+          5.14,
+          0.55,
+          0.0,
+          localSpin,
+          -0.14,
+          renderScale / (planetScale || 1)
+        );
+        monModel = mat4Multiply(planetModel, localMon);
       }
-
-      const monModel = mat4FromTranslationRotationScale(
-        mx,
-        my,
-        mz,
-        rx,
-        ry,
-        rz,
-        renderScale
-      );
       const monNormalMat = mat3FromMat4(monModel);
       const pulse = 0.5 + 0.5 * Math.sin(now * 0.004);
 
@@ -3213,6 +3234,232 @@ export class Horizon3DEngine {
       this.monumentScreenPos.x = (ndcX * 0.5 + 0.5) * rect.width;
       this.monumentScreenPos.y = (-ndcY * 0.5 + 0.5) * rect.height;
     }
+
+    gl.bindVertexArray(null);
+  }
+}
+
+export class ModelInspector3D {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.gl = canvas ? canvas.getContext('webgl2', { antialias: true, alpha: true }) : null;
+    this.prog = null;
+    this.locs = null;
+    this.mesh = null;
+    this.centerY = 0;
+    this.targetRotY = 0.55;
+    this.currentRotY = 0.55;
+    this.targetRotX = 0.25;
+    this.currentRotX = 0.25;
+    this.targetZoom = 2.15;
+    this.currentZoom = 2.15;
+    this.autoSpin = true;
+    this.isDragging = false;
+    this.lastX = 0;
+    this.lastY = 0;
+    this.active = false;
+    this.rafId = 0;
+
+    if (this.gl) {
+      this._initGL();
+      this._bindEvents();
+    }
+  }
+
+  _initGL() {
+    const gl = this.gl;
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    this.prog = createProgram(gl, MONUMENT_VERT, MONUMENT_FRAG);
+    this.locs = {
+      uProjection: gl.getUniformLocation(this.prog, 'uProjection'),
+      uView: gl.getUniformLocation(this.prog, 'uView'),
+      uModel: gl.getUniformLocation(this.prog, 'uModel'),
+      uNormalMatrix: gl.getUniformLocation(this.prog, 'uNormalMatrix'),
+      uCameraPos: gl.getUniformLocation(this.prog, 'uCameraPos'),
+      uPulse: gl.getUniformLocation(this.prog, 'uPulse'),
+      uOutlinePass: gl.getUniformLocation(this.prog, 'uOutlinePass')
+    };
+  }
+
+  _bindEvents() {
+    const el = this.canvas;
+    if (!el) return;
+
+    el.addEventListener('pointerdown', (e) => {
+      this.isDragging = true;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+      el.setPointerCapture?.(e.pointerId);
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (!this.isDragging) return;
+      const dx = e.clientX - this.lastX;
+      const dy = e.clientY - this.lastY;
+      this.targetRotY += dx * 0.012;
+      this.targetRotX = Math.max(-1.35, Math.min(1.35, this.targetRotX + dy * 0.010));
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+    });
+
+    el.addEventListener('pointerup', () => {
+      this.isDragging = false;
+    });
+    el.addEventListener('pointercancel', () => {
+      this.isDragging = false;
+    });
+
+    el.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        this.targetZoom = Math.min(3.8, Math.max(1.25, this.targetZoom + e.deltaY * 0.002));
+      },
+      { passive: false }
+    );
+  }
+
+  setGeometry(geom) {
+    if (!this.gl || !geom) return;
+    const gl = this.gl;
+    if (this.mesh?.vao) gl.deleteVertexArray(this.mesh.vao);
+
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (let i = 1; i < geom.positions.length; i += 3) {
+      const y = geom.positions[i];
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    this.centerY = Number.isFinite(minY) && Number.isFinite(maxY) ? (minY + maxY) * 0.5 : 0;
+
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    const bindAttr = (loc, data, size) => {
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+    };
+
+    bindAttr(0, geom.positions, 3);
+    bindAttr(1, geom.normals, 3);
+    bindAttr(2, geom.colors, 3);
+    bindAttr(3, geom.metas, 2);
+    bindAttr(4, geom.pivots, 3);
+
+    const idxBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geom.indices, gl.STATIC_DRAW);
+
+    gl.bindVertexArray(null);
+    this.mesh = {
+      vao,
+      count: geom.indices.length,
+      indexType: geom.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT
+    };
+    this.resetView();
+    this.renderFrame(performance.now());
+  }
+
+  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85 } = {}) {
+    this.autoSpin = false;
+    this.targetRotY = yaw;
+    this.targetRotX = pitch;
+    this.targetZoom = zoom;
+  }
+
+  resetView() {
+    this.targetRotY = 0.55;
+    this.targetRotX = 0.25;
+    this.targetZoom = 2.15;
+    this.autoSpin = true;
+  }
+
+  start() {
+    if (this.active) return;
+    this.active = true;
+    this.resize();
+    const tick = (now) => {
+      if (!this.active) return;
+      this.rafId = requestAnimationFrame(tick);
+      this.renderFrame(now);
+    };
+    this.rafId = requestAnimationFrame(tick);
+  }
+
+  stop() {
+    this.active = false;
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+  }
+
+  resize() {
+    if (!this.gl || !this.canvas) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.floor((rect.width || 620) * dpr));
+    const h = Math.max(1, Math.floor((rect.height || 480) * dpr));
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width = w;
+      this.canvas.height = h;
+    }
+    this.gl.viewport(0, 0, w, h);
+  }
+
+  renderFrame(now = 0) {
+    const gl = this.gl;
+    if (!gl || !this.mesh) return;
+
+    this.currentRotY += (this.targetRotY - this.currentRotY) * 0.1;
+    this.currentRotX += (this.targetRotX - this.currentRotX) * 0.1;
+    this.currentZoom += (this.targetZoom - this.currentZoom) * 0.1;
+    if (this.autoSpin && !this.isDragging) {
+      this.targetRotY += 0.0045;
+    }
+
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const aspect = (this.canvas.width || 1) / (this.canvas.height || 1);
+    const proj = mat4Perspective((38 * Math.PI) / 180, aspect, 0.1, 50.0);
+    const camPos = [0, 0.12, this.currentZoom];
+    const view = mat4LookAt(camPos, [0, 0, 0], [0, 1, 0]);
+    const model = mat4FromTranslationRotationScale(
+      0,
+      -this.centerY * 1.15,
+      0,
+      this.currentRotX,
+      this.currentRotY,
+      0,
+      1.25
+    );
+    const normalMat = mat3FromMat4(model);
+    const pulse = 0.5 + 0.5 * Math.sin(now * 0.005);
+
+    gl.useProgram(this.prog);
+    gl.uniformMatrix4fv(this.locs.uProjection, false, proj);
+    gl.uniformMatrix4fv(this.locs.uView, false, view);
+    gl.uniformMatrix4fv(this.locs.uModel, false, model);
+    gl.uniformMatrix3fv(this.locs.uNormalMatrix, false, normalMat);
+    gl.uniform3f(this.locs.uCameraPos, camPos[0], camPos[1], camPos[2]);
+    gl.uniform1f(this.locs.uPulse, pulse);
+
+    gl.bindVertexArray(this.mesh.vao);
+
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.FRONT);
+    gl.uniform1f(this.locs.uOutlinePass, 1.0);
+    gl.drawElements(gl.TRIANGLES, this.mesh.count, this.mesh.indexType, 0);
+
+    gl.disable(gl.CULL_FACE);
+    gl.uniform1f(this.locs.uOutlinePass, 0.0);
+    gl.drawElements(gl.TRIANGLES, this.mesh.count, this.mesh.indexType, 0);
 
     gl.bindVertexArray(null);
   }
