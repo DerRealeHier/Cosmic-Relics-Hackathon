@@ -1,5 +1,5 @@
-import { REALMS, NASA_ARTIFACTS, NASA_RESOURCES } from './data.js';
-import { Horizon3DEngine } from './moon3d.js';
+import { REALMS, NASA_ARTIFACTS, NASA_RESOURCES, SPACECRAFT_COMPONENTS } from './data.js';
+import { Horizon3DEngine, ModelInspector3D } from './moon3d.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
@@ -11,6 +11,7 @@ let selectedGalleryIdx = 0;
 let carouselDirection = 'none';
 let isStoryExpanded = false;
 let horizon3d = null;
+let inspector3d = null;
 let toastTimer = 0;
 
 function getRealmArtifacts(realm = currentRealm) {
@@ -1074,6 +1075,107 @@ function initLayoutCustomizerAndTutorials() {
   });
 }
 
+function openModelInspector() {
+  const modal = document.getElementById('model-inspector-modal');
+  const item = getActiveArtifact();
+  if (!modal || !item || !horizon3d) return;
+
+  const { geom, isOfficial, isCustom } = horizon3d.getActiveMonumentGeom();
+  const titleEl = document.getElementById('inspector-modal-title');
+  const kickerEl = document.getElementById('inspector-model-kicker');
+  const partsListEl = document.getElementById('inspector-parts-list');
+  const spinBtn = document.getElementById('inspector-autospin-btn');
+
+  if (titleEl) titleEl.textContent = item.title;
+  if (kickerEl) {
+    kickerEl.textContent = isCustom
+      ? 'Custom .GLB Model · Interactive 3D Component Inspector'
+      : isOfficial
+        ? 'Official NASA 3D Model (Comic Cel-Shaded) · Click Parts to Focus'
+        : 'Detailed Comic 3D Spacecraft · Click Parts to Focus';
+  }
+
+  const parts = SPACECRAFT_COMPONENTS[item.id] || [];
+  if (partsListEl) {
+    partsListEl.replaceChildren();
+    parts.forEach((p, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'inspector-part-card';
+      btn.dataset.partIdx = String(idx);
+
+      const titleRow = document.createElement('div');
+      titleRow.className = 'inspector-part-title-row';
+
+      const swatch = document.createElement('span');
+      swatch.className = 'inspector-part-swatch';
+      swatch.style.background = p.color;
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'inspector-part-name';
+      nameEl.textContent = p.name;
+
+      const descEl = document.createElement('p');
+      descEl.className = 'inspector-part-desc';
+      descEl.textContent = p.desc;
+
+      titleRow.append(swatch, nameEl);
+      btn.append(titleRow, descEl);
+
+      btn.addEventListener('click', () => {
+        if (!inspector3d) return;
+        partsListEl.querySelectorAll('.inspector-part-card').forEach((c) => c.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom });
+        if (spinBtn) spinBtn.setAttribute('aria-pressed', 'false');
+      });
+
+      partsListEl.appendChild(btn);
+    });
+  }
+
+  if (!modal.open) {
+    modal.showModal();
+  }
+
+  if (!inspector3d) {
+    inspector3d = new ModelInspector3D(document.getElementById('inspector-3d-canvas'));
+  }
+  if (geom) {
+    inspector3d.setGeometry(geom);
+  }
+  if (spinBtn) spinBtn.setAttribute('aria-pressed', 'true');
+  inspector3d.start();
+}
+
+function initModelInspector() {
+  const modal = document.getElementById('model-inspector-modal');
+  const closeBtn = document.getElementById('close-inspector-btn');
+  const resetBtn = document.getElementById('inspector-reset-btn');
+  const spinBtn = document.getElementById('inspector-autospin-btn');
+  const openBtn = document.getElementById('open-inspector-btn');
+
+  openBtn?.addEventListener('click', openModelInspector);
+  closeBtn?.addEventListener('click', () => modal?.close());
+  modal?.addEventListener('close', () => {
+    inspector3d?.stop();
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    inspector3d?.resetView();
+    if (spinBtn) spinBtn.setAttribute('aria-pressed', 'true');
+    document.querySelectorAll('#inspector-parts-list .inspector-part-card').forEach((c) => {
+      c.classList.remove('is-selected');
+    });
+  });
+
+  spinBtn?.addEventListener('click', () => {
+    if (!inspector3d) return;
+    inspector3d.autoSpin = !inspector3d.autoSpin;
+    spinBtn.setAttribute('aria-pressed', inspector3d.autoSpin ? 'true' : 'false');
+  });
+}
+
 // =========================================================================
 // 7. EVENT WIRING & INITIALIZATION
 // =========================================================================
@@ -1081,17 +1183,15 @@ function initApp() {
   startStarfield();
   updateRealmCounts();
   initSourcesModal();
+  initModelInspector();
   initLayoutCustomizerAndTutorials();
 
-  // Initialize 3D Horizon Engine with NASA SVS 14959 Moon GLB
+  // Initialize 3D Horizon Engine
   horizon3d = new Horizon3DEngine({
     container: document.getElementById('moon-3d-container'),
     canvas: document.getElementById('horizon-3d-canvas'),
     onInspectArtifact: () => {
-      const item = getActiveArtifact();
-      if (item) {
-        showToast(`🛰️ ${item.title} (${item.coords})`);
-      }
+      openModelInspector();
     },
     onGlobeModeChange: (isFullGlobe) => {
       const btn = document.getElementById('toggle-full-globe-btn');
@@ -1114,7 +1214,7 @@ function initApp() {
     }
   });
 
-  horizon3d.init('assets/nasa/svs-14959/moon_small.glb');
+  horizon3d.init();
 
   // Custom NASA .GLB upload input
   const glbInput = document.getElementById('nasa-glb-upload');

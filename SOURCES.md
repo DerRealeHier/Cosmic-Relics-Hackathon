@@ -20,12 +20,14 @@ python serve.py --port 8080 --no-browser
 
 ## Official NASA Resources Used
 
-### 1. 3D Models & Planetary Surface Maps
+### 1. Official NASA 3D Spacecraft Models & Planetary Maps
 
-| Resource / ID | Local Asset | Description & Credits | Official NASA Source |
+| Resource / ID | Local Asset | Description & Credits | Official NASA / Upstream Source |
 | :--- | :--- | :--- | :--- |
-| **NASA SVS 14959** | `assets/nasa/svs-14959/moon_small.glb` | **Moon 3D Models for Web, AR, and Animation**. NASA Goddard Space Flight Center — Dan Gallagher (eMITS, Producer), Ernie Wright (STC, Data provider / LRO LROC & LOLA), Tuomas Kankola, Josh Klint (Data analysts), Aaron E. Lepsch (Technical support). | [svs.gsfc.nasa.gov/14959](https://svs.gsfc.nasa.gov/14959) ([GLB Asset](https://svs.gsfc.nasa.gov/vis/a010000/a014900/a014959/moon_small.glb)) |
-| **NASA SVS 4720** | `assets/nasa/svs-4720/lroc_color_2k.jpg`<br>`assets/nasa/svs-4720/ldem_3_8bit.jpg` | **CGI Moon Kit** — LROC Hapke Normalized WAC Mosaic (`lroc_color_2k.jpg`) & LOLA Altimeter Elevation Map (`ldem_3_8bit.jpg`). NASA Scientific Visualization Studio / Ernie Wright (GSFC); LROC & LOLA Instrument Teams. | [svs.gsfc.nasa.gov/4720](https://svs.gsfc.nasa.gov/4720) ([Color 2K](https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg)) |
+| **NASA Science 3D** | `assets/nasa/models/voyager.glb`<br>`assets/nasa/models/new-horizons.glb` | **Voyager** & **New Horizons** official 3D `.glb` spacecraft models, rendered with real-time WebGL2 comic cel-shading & black ink outlines. | [science.nasa.gov/3d-resources/](https://science.nasa.gov/3d-resources/) ([Voyager](https://science.nasa.gov/resource/voyager-3d-model/)) |
+| **NASA-3D-Resources** | `assets/nasa/models/apollo-lunar-module.glb`<br>`assets/nasa/models/viking-lander.glb`<br>`assets/nasa/models/opportunity-mer.glb`<br>`assets/nasa/models/insight-lander.glb`<br>`assets/nasa/models/ingenuity-helicopter.glb`<br>`assets/nasa/models/pioneer10.glb`<br>`assets/nasa/models/cassini-huygens.glb` | Official NASA JPL / JSC 3D hardware `.glb` models converted in-browser to comic cel-shaded meshes with part-level ink outlines. | [github.com/nasa/NASA-3D-Resources](https://github.com/nasa/NASA-3D-Resources) |
+| **NASA SVS 4720** | `assets/nasa/svs-4720/lroc_color_2k.jpg` | **CGI Moon Kit** — LROC Hapke Normalized WAC Color Mosaic (`lroc_color_2k.jpg`) used in the Apollo 11 orbital gallery. NASA SVS / Ernie Wright (GSFC); LROC Instrument Team. | [svs.gsfc.nasa.gov/4720](https://svs.gsfc.nasa.gov/4720) ([Color 2K](https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg)) |
+| **Google Draco (Apache-2.0)** | `assets/vendor/draco/draco_decoder_gltf.js`<br>`assets/vendor/draco/draco_decoder_gltf.wasm` | Official Google Draco v1.5.7 WebAssembly glTF decoder bundled locally for offline decoding of Draco-compressed NASA `.glb` models. | [github.com/google/draco](https://github.com/google/draco) |
 
 ---
 
