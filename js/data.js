@@ -990,96 +990,96 @@ export const NASA_ARTIFACTS = [
 
 export const SPACECRAFT_COMPONENTS = {
   apollo11: [
-    { name: 'Gold Kapton Thermal Foil', color: '#fbbf24', yaw: 0.65, pitch: 0.25, zoom: 1.75, desc: 'Ultra-thin crinkly gold-colored Kapton blankets protect the descent stage from +120 °C sunlight and −170 °C lunar night.' },
-    { name: '4 Landing Legs & Crushable Footpads', color: '#f97316', yaw: 1.35, pitch: 0.40, zoom: 1.85, desc: 'Honeycomb aluminum struts absorbed the touchdown shock; the front leg carries the ladder and commemorative plaque.' },
-    { name: 'Ascent Stage & Crew Cabin', color: '#cbd5e1', yaw: -0.45, pitch: 0.10, zoom: 1.70, desc: 'Pressurized cabin where Neil Armstrong and Buzz Aldrin lived, plus the upper engine that blasted them back to lunar orbit.' },
-    { name: 'RCS Thruster Quads & Dish Antenna', color: '#38bdf8', yaw: -1.30, pitch: -0.05, zoom: 1.65, desc: 'Small rocket clusters steered Eagle during landing while the steerable parabolic dish beamed live TV back to Earth.' }
+    { name: 'Gold Kapton Thermal Foil', color: '#fbbf24', yaw: 0.65, pitch: 0.25, zoom: 1.75, anchor: [-0.25, -0.25, 0.55], desc: 'Ultra-thin crinkly gold-colored Kapton blankets protect the descent stage from +120 °C sunlight and −170 °C lunar night.' },
+    { name: '4 Landing Legs & Crushable Footpads', color: '#f97316', yaw: 1.35, pitch: 0.40, zoom: 1.85, anchor: [-0.85, -0.85, 0.45], desc: 'Honeycomb aluminum struts absorbed the touchdown shock; the front leg carries the ladder and commemorative plaque.' },
+    { name: 'Ascent Stage & Crew Cabin', color: '#cbd5e1', yaw: -0.45, pitch: 0.10, zoom: 1.70, anchor: [0.2, 0.60, 0.45], desc: 'Pressurized cabin where Neil Armstrong and Buzz Aldrin lived, plus the upper engine that blasted them back to lunar orbit.' },
+    { name: 'RCS Thruster Quads & Dish Antenna', color: '#38bdf8', yaw: -1.30, pitch: -0.05, zoom: 1.65, anchor: [0.75, 0.55, 0.25], desc: 'Small rocket clusters steered Eagle during landing while the steerable parabolic dish beamed live TV back to Earth.' }
   ],
   surveyor3: [
-    { name: 'Angled Solar Sail & Planar Antenna', color: '#0284c7', yaw: 0.45, pitch: -0.25, zoom: 1.85, desc: 'Top-mounted blue photovoltaic panel converted sunlight into electricity while the flat white antenna sent telemetry to Earth.' },
-    { name: 'TV Camera Turret & Mirror Hood', color: '#22d3ee', yaw: 0.90, pitch: 0.10, zoom: 1.65, desc: 'Scanned the crater floor in 200- and 600-line images — later unbolted and brought home by Apollo 12 astronauts!' },
-    { name: 'Soil-Sampler Pantograph Scoop Arm', color: '#f97316', yaw: 0.55, pitch: 0.45, zoom: 1.75, desc: 'Extendable claw that dug four 18 cm trenches in Oceanus Procellarum to test if lunar dust could hold Apollo landers.' },
-    { name: '3 Tripod Legs & Vernier Thrusters', color: '#fbbf24', yaw: -0.80, pitch: 0.35, zoom: 1.90, desc: 'Three folding legs with crushable honeycomb footpads cushioned Surveyor 3 when it bounced twice on landing.' }
+    { name: 'Angled Solar Sail & Planar Antenna', color: '#0284c7', yaw: 0.45, pitch: -0.25, zoom: 1.85, anchor: [-0.15, 0.85, 0.20], desc: 'Top-mounted blue photovoltaic panel converted sunlight into electricity while the flat white antenna sent telemetry to Earth.' },
+    { name: 'TV Camera Turret & Mirror Hood', color: '#22d3ee', yaw: 0.90, pitch: 0.10, zoom: 1.65, anchor: [-0.45, 0.25, 0.45], desc: 'Scanned the crater floor in 200- and 600-line images — later unbolted and brought home by Apollo 12 astronauts!' },
+    { name: 'Soil-Sampler Pantograph Scoop Arm', color: '#f97316', yaw: 0.55, pitch: 0.45, zoom: 1.75, anchor: [-0.35, -0.35, 0.65], desc: 'Extendable claw that dug four 18 cm trenches in Oceanus Procellarum to test if lunar dust could hold Apollo landers.' },
+    { name: '3 Tripod Legs & Vernier Thrusters', color: '#fbbf24', yaw: -0.80, pitch: 0.35, zoom: 1.90, anchor: [0.75, -0.80, 0.45], desc: 'Three folding legs with crushable honeycomb footpads cushioned Surveyor 3 when it bounced twice on landing.' }
   ],
   apollo15: [
-    { name: 'Wire-Mesh Tires & Orange Fenders', color: '#f97316', yaw: 0.70, pitch: 0.40, zoom: 1.75, desc: 'Hollow tires woven from zinc-coated piano wire with titanium chevron treads — no air needed, so they never pop in vacuum!' },
-    { name: 'Umbrella High-Gain Dish & Color TV Cam', color: '#fbbf24', yaw: 0.35, pitch: 0.05, zoom: 1.70, desc: 'Steerable gold-mesh umbrella antenna and remote-controlled TV camera that filmed the hammer-and-feather drop live.' },
-    { name: 'Crew Mesh Seats & T-Bar Hand Controller', color: '#f8fafc', yaw: -0.60, pitch: 0.20, zoom: 1.75, desc: 'Twin folding seats with astronaut restraints and a central joystick steering all four electric hub motors.' },
-    { name: 'ALSEP Station & SNAP-27 RTG', color: '#64748b', yaw: -2.10, pitch: 0.30, zoom: 1.95, desc: 'Plutonium-powered generator and science station that measured moonquakes, heat flow, and solar wind until 1977.' }
+    { name: 'Wire-Mesh Tires & Orange Fenders', color: '#f97316', yaw: 0.70, pitch: 0.40, zoom: 1.75, anchor: [-0.65, -0.65, 0.65], desc: 'Hollow tires woven from zinc-coated piano wire with titanium chevron treads — no air needed, so they never pop in vacuum!' },
+    { name: 'Umbrella High-Gain Dish & Color TV Cam', color: '#fbbf24', yaw: 0.35, pitch: 0.05, zoom: 1.70, anchor: [-0.25, 0.65, 0.55], desc: 'Steerable gold-mesh umbrella antenna and remote-controlled TV camera that filmed the hammer-and-feather drop live.' },
+    { name: 'Crew Mesh Seats & T-Bar Hand Controller', color: '#f8fafc', yaw: -0.60, pitch: 0.20, zoom: 1.75, anchor: [0.35, 0.15, 0.25], desc: 'Twin folding seats with astronaut restraints and a central joystick steering all four electric hub motors.' },
+    { name: 'ALSEP Station & SNAP-27 RTG', color: '#64748b', yaw: -2.10, pitch: 0.30, zoom: 1.95, anchor: [0.80, -0.30, -0.40], desc: 'Plutonium-powered generator and science station that measured moonquakes, heat flow, and solar wind until 1977.' }
   ],
   apollo16: [
-    { name: 'Gold S-201 Far-UV Schmidt Telescope', color: '#fbbf24', yaw: 0.60, pitch: 0.25, zoom: 1.70, desc: 'First astronomical observatory on another world, parked in Orion’s shadow to image Earth’s upper atmosphere and distant stars.' },
-    { name: 'Orion Descent Stage & Engine Bell', color: '#f97316', yaw: -0.55, pitch: 0.30, zoom: 1.85, desc: 'Octagonal gold Kapton landing base with the throttleable descent rocket bell and front-leg crew ladder.' },
-    { name: 'Highlands Anorthosite Boulder ("Big Muley")', color: '#f8fafc', yaw: -1.40, pitch: 0.40, zoom: 1.90, desc: 'Bright ancient highland rock sampled by John Young and Charlie Duke, proving the Descartes region wasn’t volcanic.' }
+    { name: 'Gold S-201 Far-UV Schmidt Telescope', color: '#fbbf24', yaw: 0.60, pitch: 0.25, zoom: 1.70, anchor: [-0.45, -0.35, 0.55], desc: 'First astronomical observatory on another world, parked in Orion’s shadow to image Earth’s upper atmosphere and distant stars.' },
+    { name: 'Orion Descent Stage & Engine Bell', color: '#f97316', yaw: -0.55, pitch: 0.30, zoom: 1.85, anchor: [0.30, -0.50, 0.45], desc: 'Octagonal gold Kapton landing base with the throttleable descent rocket bell and front-leg crew ladder.' },
+    { name: 'Highlands Anorthosite Boulder ("Big Muley")', color: '#f8fafc', yaw: -1.40, pitch: 0.40, zoom: 1.90, anchor: [0.80, -0.80, 0.25], desc: 'Bright ancient highland rock sampled by John Young and Charlie Duke, proving the Descartes region wasn’t volcanic.' }
   ],
   apollo17: [
-    { name: 'LRV-3 Moon Buggy (Duct-Tape Fender)', color: '#f97316', yaw: 0.75, pitch: 0.30, zoom: 1.80, desc: 'Drove a record 35.9 km across Taurus–Littrow valley; astronauts repaired a broken fender using laminated lunar maps and duct tape!' },
-    { name: 'Challenger Descent Stage & Ladder', color: '#fbbf24', yaw: -0.65, pitch: 0.25, zoom: 1.85, desc: 'Base of the final Apollo lunar lander, left behind with a plaque reading "May the spirit of peace in which we came be reflected in the lives of all mankind."' },
-    { name: 'Shorty Crater Orange Volcanic Glass', color: '#fb923c', yaw: 1.40, pitch: 0.55, zoom: 1.95, desc: 'Tiny orange glass beads discovered by geologist Harrison Schmitt, formed in explosive lunar fire fountains 3.6 billion years ago.' }
+    { name: 'LRV-3 Moon Buggy (Duct-Tape Fender)', color: '#f97316', yaw: 0.75, pitch: 0.30, zoom: 1.80, anchor: [-0.65, -0.45, 0.55], desc: 'Drove a record 35.9 km across Taurus–Littrow valley; astronauts repaired a broken fender using laminated lunar maps and duct tape!' },
+    { name: 'Challenger Descent Stage & Ladder', color: '#fbbf24', yaw: -0.65, pitch: 0.25, zoom: 1.85, anchor: [0.35, -0.40, 0.45], desc: 'Base of the final Apollo lunar lander, left behind with a plaque reading "May the spirit of peace in which we came be reflected in the lives of all mankind."' },
+    { name: 'Shorty Crater Orange Volcanic Glass', color: '#fb923c', yaw: 1.40, pitch: 0.55, zoom: 1.95, anchor: [-0.80, -0.85, 0.20], desc: 'Tiny orange glass beads discovered by geologist Harrison Schmitt, formed in explosive lunar fire fountains 3.6 billion years ago.' }
   ],
   lcross_blueghost: [
-    { name: 'Centaur Upper-Stage Impactor', color: '#f8fafc', yaw: 0.50, pitch: 0.20, zoom: 1.80, desc: '2,300 kg spent rocket stage that slammed into permanently shadowed Cabeus Crater at 9,000 km/h to excavate hidden water ice.' },
-    { name: 'LCROSS Shepherding Spacecraft', color: '#fbbf24', yaw: 0.85, pitch: -0.20, zoom: 1.75, desc: 'Flew right through the Centaur debris plume 4 minutes later with IR spectrometers and cameras before impacting the Moon itself.' },
-    { name: 'Excavated Water-Ice Plume', color: '#22d3ee', yaw: -0.35, pitch: 0.15, zoom: 1.90, desc: 'Bright plume of water vapor, ice crystals, and organic volatiles — confirming ~5.6% water ice in polar lunar craters!' }
+    { name: 'Centaur Upper-Stage Impactor', color: '#f8fafc', yaw: 0.50, pitch: 0.20, zoom: 1.80, anchor: [-0.30, -0.35, 0.55], desc: '2,300 kg spent rocket stage that slammed into permanently shadowed Cabeus Crater at 9,000 km/h to excavate hidden water ice.' },
+    { name: 'LCROSS Shepherding Spacecraft', color: '#fbbf24', yaw: 0.85, pitch: -0.20, zoom: 1.75, anchor: [-0.55, 0.65, 0.35], desc: 'Flew right through the Centaur debris plume 4 minutes later with IR spectrometers and cameras before impacting the Moon itself.' },
+    { name: 'Excavated Water-Ice Plume', color: '#22d3ee', yaw: -0.35, pitch: 0.15, zoom: 1.90, anchor: [0.25, 0.25, 0.55], desc: 'Bright plume of water vapor, ice crystals, and organic volatiles — confirming ~5.6% water ice in polar lunar craters!' }
   ],
   viking1: [
-    { name: 'High-Gain Parabolic Dish Antenna', color: '#f8fafc', yaw: 0.50, pitch: -0.15, zoom: 1.75, desc: 'White dish antenna tilted toward Earth to beam back the first clear color panoramas from the surface of Mars.' },
-    { name: 'RTG Nuclear Power Covers', color: '#fbbf24', yaw: -0.75, pitch: 0.25, zoom: 1.80, desc: 'Two plutonium-238 radioisotope thermoelectric generators kept Viking 1 warm and active for over 6 years, immune to dust storms.' },
-    { name: 'Biology Lab & Soil Sampler Arm', color: '#f97316', yaw: 0.90, pitch: 0.30, zoom: 1.80, desc: 'Extendable scoop arm fed Martian soil into automated gas-exchange and labeled-release experiments searching for microbes.' },
-    { name: 'Twin Facsimile Cameras & Meteorology Boom', color: '#38bdf8', yaw: -1.40, pitch: 0.05, zoom: 1.75, desc: 'Rotating cylindrical cameras and weather sensors that tracked Martian winds, pressure, and temperatures at Chryse Planitia.' }
+    { name: 'High-Gain Parabolic Dish Antenna', color: '#f8fafc', yaw: 0.50, pitch: -0.15, zoom: 1.75, anchor: [-0.25, 0.70, 0.40], desc: 'White dish antenna tilted toward Earth to beam back the first clear color panoramas from the surface of Mars.' },
+    { name: 'RTG Nuclear Power Covers', color: '#fbbf24', yaw: -0.75, pitch: 0.25, zoom: 1.80, anchor: [0.55, 0.10, 0.45], desc: 'Two plutonium-238 radioisotope thermoelectric generators kept Viking 1 warm and active for over 6 years, immune to dust storms.' },
+    { name: 'Biology Lab & Soil Sampler Arm', color: '#f97316', yaw: 0.90, pitch: 0.30, zoom: 1.80, anchor: [-0.65, -0.30, 0.55], desc: 'Extendable scoop arm fed Martian soil into automated gas-exchange and labeled-release experiments searching for microbes.' },
+    { name: 'Twin Facsimile Cameras & Meteorology Boom', color: '#38bdf8', yaw: -1.40, pitch: 0.05, zoom: 1.75, anchor: [0.75, 0.45, 0.25], desc: 'Rotating cylindrical cameras and weather sensors that tracked Martian winds, pressure, and temperatures at Chryse Planitia.' }
   ],
   sojourner: [
-    { name: '3 Unfolded Pathfinder Solar Petals', color: '#0284c7', yaw: 0.40, pitch: 0.45, zoom: 1.95, desc: 'Triangular petal doors opened after airbag bounce-landing, exposing blue solar cells and acting as a base station for Earth.' },
-    { name: '6-Wheeled Rocker-Bogie Suspension', color: '#64748b', yaw: 0.85, pitch: 0.35, zoom: 1.70, desc: 'Flexible titanium suspension allowed the 10.6 kg microwave-sized rover to climb over Martian rocks bigger than its wheels.' },
-    { name: 'Top Solar Panel & APXS Spectrometer', color: '#22d3ee', yaw: -0.50, pitch: 0.20, zoom: 1.75, desc: 'Pressed its Alpha Proton X-Ray Spectrometer against "Barnacle Bill" and "Yogi" rocks to measure Martian mineral chemistry.' },
-    { name: 'IMP Stereo Mast & Windsock', color: '#fbbf24', yaw: -1.25, pitch: 0.05, zoom: 1.85, desc: 'Pathfinder’s pop-up stereo camera tower surveyed Ares Vallis and watched Sojourner’s 100-meter expedition.' }
+    { name: '3 Unfolded Pathfinder Solar Petals', color: '#0284c7', yaw: 0.40, pitch: 0.45, zoom: 1.95, anchor: [-0.35, -0.40, 0.60], desc: 'Triangular petal doors opened after airbag bounce-landing, exposing blue solar cells and acting as a base station for Earth.' },
+    { name: '6-Wheeled Rocker-Bogie Suspension', color: '#64748b', yaw: 0.85, pitch: 0.35, zoom: 1.70, anchor: [-0.55, -0.75, 0.45], desc: 'Flexible titanium suspension allowed the 10.6 kg microwave-sized rover to climb over Martian rocks bigger than its wheels.' },
+    { name: 'Top Solar Panel & APXS Spectrometer', color: '#22d3ee', yaw: -0.50, pitch: 0.20, zoom: 1.75, anchor: [0.30, 0.45, 0.45], desc: 'Pressed its Alpha Proton X-Ray Spectrometer against "Barnacle Bill" and "Yogi" rocks to measure Martian mineral chemistry.' },
+    { name: 'IMP Stereo Mast & Windsock', color: '#fbbf24', yaw: -1.25, pitch: 0.05, zoom: 1.85, anchor: [0.70, 0.65, 0.25], desc: 'Pathfinder’s pop-up stereo camera tower surveyed Ares Vallis and watched Sojourner’s 100-meter expedition.' }
   ],
   opportunity: [
-    { name: 'Gull-Wing Solar Arrays', color: '#0284c7', yaw: 0.45, pitch: 0.35, zoom: 1.80, desc: 'Deployable blue solar wings kept Oppy powered for 14 years — aided by Martian dust devils that swept the panels clean!' },
-    { name: 'Pancam Mast & Stereo Cameras', color: '#f8fafc', yaw: 0.80, pitch: -0.10, zoom: 1.70, desc: '1.4-meter-tall mast with panoramic color cameras and Mini-TES infrared spectrometer for spotting water-altered minerals.' },
-    { name: '6-Wheel Rocker-Bogie Drive', color: '#64748b', yaw: -0.75, pitch: 0.30, zoom: 1.80, desc: 'Drove an off-world record 45.16 kilometers from Eagle Crater to Endurance, Victoria, and Endeavour Craters.' },
-    { name: 'Robotic Arm & Rock Abrasion Tool (RAT)', color: '#fbbf24', yaw: 1.40, pitch: 0.25, zoom: 1.75, desc: 'Ground into Martian bedrock and discovered hematite "blueberries" — tiny spheres formed in ancient liquid water.' }
+    { name: 'Gull-Wing Solar Arrays', color: '#0284c7', yaw: 0.45, pitch: 0.35, zoom: 1.80, anchor: [-0.55, 0.10, 0.45], desc: 'Deployable blue solar wings kept Oppy powered for 14 years — aided by Martian dust devils that swept the panels clean!' },
+    { name: 'Pancam Mast & Stereo Cameras', color: '#f8fafc', yaw: 0.80, pitch: -0.10, zoom: 1.70, anchor: [-0.20, 0.80, 0.30], desc: '1.4-meter-tall mast with panoramic color cameras and Mini-TES infrared spectrometer for spotting water-altered minerals.' },
+    { name: '6-Wheel Rocker-Bogie Drive', color: '#64748b', yaw: -0.75, pitch: 0.30, zoom: 1.80, anchor: [0.55, -0.75, 0.45], desc: 'Drove an off-world record 45.16 kilometers from Eagle Crater to Endurance, Victoria, and Endeavour Craters.' },
+    { name: 'Robotic Arm & Rock Abrasion Tool (RAT)', color: '#fbbf24', yaw: 1.40, pitch: 0.25, zoom: 1.75, anchor: [-0.75, -0.25, 0.55], desc: 'Ground into Martian bedrock and discovered hematite "blueberries" — tiny spheres formed in ancient liquid water.' }
   ],
   insight: [
-    { name: 'Twin Circular Decagonal Solar Arrays', color: '#0284c7', yaw: 0.55, pitch: 0.40, zoom: 1.95, desc: 'Two 2.2-meter fan-shaped solar wings unfurled like paper fans to power InSight on Elysium Planitia.' },
-    { name: 'SEIS Copper-Domed Seismometer', color: '#f97316', yaw: 0.90, pitch: 0.30, zoom: 1.80, desc: 'Ultra-sensitive seismometer placed directly on Martian soil, detecting over 1,300 marsquakes and mapping Mars’s liquid core.' },
-    { name: '2.4-Meter Robotic Deployment Arm', color: '#cbd5e1', yaw: -0.60, pitch: 0.15, zoom: 1.75, desc: 'Grapple arm that lifted SEIS and the "Mole" heat-flow probe off the lander deck onto the ground.' },
-    { name: 'HP³ "Mole" & Weather Sensors', color: '#fbbf24', yaw: -1.45, pitch: 0.25, zoom: 1.85, desc: 'Self-hammering thermal probe and RISE radio antennas that tracked Mars’s subtle axial wobble.' }
+    { name: 'Twin Circular Decagonal Solar Arrays', color: '#0284c7', yaw: 0.55, pitch: 0.40, zoom: 1.95, anchor: [-0.75, 0.15, 0.35], desc: 'Two 2.2-meter fan-shaped solar wings unfurled like paper fans to power InSight on Elysium Planitia.' },
+    { name: 'SEIS Copper-Domed Seismometer', color: '#f97316', yaw: 0.90, pitch: 0.30, zoom: 1.80, anchor: [-0.55, -0.55, 0.55], desc: 'Ultra-sensitive seismometer placed directly on Martian soil, detecting over 1,300 marsquakes and mapping Mars’s liquid core.' },
+    { name: '2.4-Meter Robotic Deployment Arm', color: '#cbd5e1', yaw: -0.60, pitch: 0.15, zoom: 1.75, anchor: [0.40, 0.45, 0.45], desc: 'Grapple arm that lifted SEIS and the "Mole" heat-flow probe off the lander deck onto the ground.' },
+    { name: 'HP³ "Mole" & Weather Sensors', color: '#fbbf24', yaw: -1.45, pitch: 0.25, zoom: 1.85, anchor: [0.75, -0.45, 0.25], desc: 'Self-hammering thermal probe and RISE radio antennas that tracked Mars’s subtle axial wobble.' }
   ],
   ingenuity: [
-    { name: 'Counter-Rotating Carbon-Fiber Rotors', color: '#64748b', yaw: 0.45, pitch: 0.25, zoom: 1.75, desc: 'Two 1.2-meter blades spinning at ~2,537 rpm — 5× faster than Earth helicopters — to grip Mars’s 1%-density air.' },
-    { name: 'Top Solar Panel & Mast', color: '#0284c7', yaw: 0.10, pitch: -0.35, zoom: 1.70, desc: 'Charges six lithium-ion batteries each sol so Ginny could survive −90 °C Martian nights and fly 72 times.' },
-    { name: 'Gold Insulated Fuselage Cube', color: '#fbbf24', yaw: 0.95, pitch: 0.15, zoom: 1.65, desc: 'Tissue-box-sized body housing the Qualcomm flight computer, navigation camera, and laser altimeter.' },
-    { name: '4 Springy Carbon Landing Legs', color: '#cbd5e1', yaw: -0.80, pitch: 0.35, zoom: 1.80, desc: 'Ultra-lightweight flexible legs designed to absorb touchdowns on rocky Jezero Crater dunes.' }
+    { name: 'Counter-Rotating Carbon-Fiber Rotors', color: '#64748b', yaw: 0.45, pitch: 0.25, zoom: 1.75, anchor: [-0.50, 0.65, 0.35], desc: 'Two 1.2-meter blades spinning at ~2,537 rpm — 5× faster than Earth helicopters — to grip Mars’s 1%-density air.' },
+    { name: 'Top Solar Panel & Mast', color: '#0284c7', yaw: 0.10, pitch: -0.35, zoom: 1.70, anchor: [0.0, 0.90, 0.15], desc: 'Charges six lithium-ion batteries each sol so Ginny could survive −90 °C Martian nights and fly 72 times.' },
+    { name: 'Gold Insulated Fuselage Cube', color: '#fbbf24', yaw: 0.95, pitch: 0.15, zoom: 1.65, anchor: [-0.35, -0.15, 0.45], desc: 'Tissue-box-sized body housing the Qualcomm flight computer, navigation camera, and laser altimeter.' },
+    { name: '4 Springy Carbon Landing Legs', color: '#cbd5e1', yaw: -0.80, pitch: 0.35, zoom: 1.80, anchor: [0.65, -0.80, 0.45], desc: 'Ultra-lightweight flexible legs designed to absorb touchdowns on rocky Jezero Crater dunes.' }
   ],
   pioneer10: [
-    { name: '2.74-Meter High-Gain Dish', color: '#f8fafc', yaw: 0.45, pitch: 0.20, zoom: 1.80, desc: 'Giant white parabolic dish kept aimed at Earth across billions of kilometers as Pioneer 10 became the first probe past Jupiter.' },
-    { name: 'Gold Pioneer Plaque', color: '#fbbf24', yaw: -0.65, pitch: 0.10, zoom: 1.65, desc: 'Gold-anodized aluminum plaque engraved with a pulsar map to Earth and figures of humanity for any alien finders.' },
-    { name: 'Dual SNAP-19 RTG Booms', color: '#f97316', yaw: 1.35, pitch: 0.25, zoom: 1.85, desc: 'Four plutonium generators on two 3-meter booms powered Pioneer 10 far beyond where sunlight is useful.' },
-    { name: 'Magnetometer Boom (6.5 m)', color: '#38bdf8', yaw: -1.60, pitch: 0.15, zoom: 1.95, desc: 'Long sensor mast projecting far away from the spacecraft body to measure Jupiter’s massive magnetic field cleanly.' }
+    { name: '2.74-Meter High-Gain Dish', color: '#f8fafc', yaw: 0.45, pitch: 0.20, zoom: 1.80, anchor: [-0.20, 0.25, 0.55], desc: 'Giant white parabolic dish kept aimed at Earth across billions of kilometers as Pioneer 10 became the first probe past Jupiter.' },
+    { name: 'Gold Pioneer Plaque', color: '#fbbf24', yaw: -0.65, pitch: 0.10, zoom: 1.65, anchor: [0.45, -0.15, 0.45], desc: 'Gold-anodized aluminum plaque engraved with a pulsar map to Earth and figures of humanity for any alien finders.' },
+    { name: 'Dual SNAP-19 RTG Booms', color: '#f97316', yaw: 1.35, pitch: 0.25, zoom: 1.85, anchor: [-0.85, -0.15, 0.25], desc: 'Four plutonium generators on two 3-meter booms powered Pioneer 10 far beyond where sunlight is useful.' },
+    { name: 'Magnetometer Boom (6.5 m)', color: '#38bdf8', yaw: -1.60, pitch: 0.15, zoom: 1.95, anchor: [0.90, 0.10, 0.15], desc: 'Long sensor mast projecting far away from the spacecraft body to measure Jupiter’s massive magnetic field cleanly.' }
   ],
   voyager1: [
-    { name: '3.7-Meter High-Gain Dish Antenna', color: '#f8fafc', yaw: 0.50, pitch: 0.20, zoom: 1.85, desc: 'Beams faint 20-watt radio signals across 24.5 billion km of interstellar space back to NASA’s Deep Space Network.' },
-    { name: 'The Golden Record', color: '#fbbf24', yaw: -0.75, pitch: 0.10, zoom: 1.65, desc: '12-inch gold-plated copper phonograph disc carrying greetings in 55 languages, whale songs, Bach, and Chuck Berry.' },
-    { name: '13-Meter Magnetometer Boom', color: '#cbd5e1', yaw: 1.45, pitch: 0.25, zoom: 2.15, desc: 'Truss boom holding magnetic-field sensors far from the bus — confirmed Voyager 1 crossed the heliopause in 2012!' },
-    { name: 'RTG Power Boom & Scan Platform', color: '#f97316', yaw: -1.55, pitch: -0.15, zoom: 1.95, desc: 'Three plutonium-238 RTGs on one boom and the camera/spectrometer scan platform on the opposite science boom.' }
+    { name: '3.7-Meter High-Gain Dish Antenna', color: '#f8fafc', yaw: 0.50, pitch: 0.20, zoom: 1.85, anchor: [-0.15, 0.35, 0.45], desc: 'Beams faint 20-watt radio signals across 24.5 billion km of interstellar space back to NASA’s Deep Space Network.' },
+    { name: 'The Golden Record', color: '#fbbf24', yaw: -0.75, pitch: 0.10, zoom: 1.65, anchor: [0.30, -0.05, 0.45], desc: '12-inch gold-plated copper phonograph disc carrying greetings in 55 languages, whale songs, Bach, and Chuck Berry.' },
+    { name: '13-Meter Magnetometer Boom', color: '#cbd5e1', yaw: 1.45, pitch: 0.25, zoom: 2.15, anchor: [-0.90, -0.15, 0.20], desc: 'Truss boom holding magnetic-field sensors far from the bus — confirmed Voyager 1 crossed the heliopause in 2012!' },
+    { name: 'RTG Power Boom & Scan Platform', color: '#f97316', yaw: -1.55, pitch: -0.15, zoom: 1.95, anchor: [0.80, -0.15, 0.25], desc: 'Three plutonium-238 RTGs on one boom and the camera/spectrometer scan platform on the opposite science boom.' }
   ],
   voyager2: [
-    { name: '3.7-Meter High-Gain Dish Antenna', color: '#f8fafc', yaw: 0.50, pitch: 0.20, zoom: 1.85, desc: 'Only spacecraft in history to visit all four giant planets — Jupiter, Saturn, Uranus, and Neptune!' },
-    { name: 'The Golden Record', color: '#fbbf24', yaw: -0.75, pitch: 0.10, zoom: 1.65, desc: 'Identical cosmic time capsule bolted to the decagonal bus, including pictorial playback instructions.' },
-    { name: 'Plasma Wave "V" Antennas (10 m)', color: '#fde047', yaw: 0.20, pitch: 0.50, zoom: 2.00, desc: 'Twin golden whip antennas that still listen to plasma oscillations in interstellar space beyond 20 billion km.' },
-    { name: 'RTG Power Boom & Science Platform', color: '#f97316', yaw: -1.55, pitch: -0.15, zoom: 1.95, desc: 'Keeps Voyager 2’s remaining instruments warm and transmitting more than 48 years after its 1977 launch.' }
+    { name: '3.7-Meter High-Gain Dish Antenna', color: '#f8fafc', yaw: 0.50, pitch: 0.20, zoom: 1.85, anchor: [-0.15, 0.35, 0.45], desc: 'Only spacecraft in history to visit all four giant planets — Jupiter, Saturn, Uranus, and Neptune!' },
+    { name: 'The Golden Record', color: '#fbbf24', yaw: -0.75, pitch: 0.10, zoom: 1.65, anchor: [0.30, -0.05, 0.45], desc: 'Identical cosmic time capsule bolted to the decagonal bus, including pictorial playback instructions.' },
+    { name: 'Plasma Wave "V" Antennas (10 m)', color: '#fde047', yaw: 0.20, pitch: 0.50, zoom: 2.00, anchor: [-0.25, -0.75, 0.45], desc: 'Twin golden whip antennas that still listen to plasma oscillations in interstellar space beyond 20 billion km.' },
+    { name: 'RTG Power Boom & Science Platform', color: '#f97316', yaw: -1.55, pitch: -0.15, zoom: 1.95, anchor: [0.80, -0.15, 0.25], desc: 'Keeps Voyager 2’s remaining instruments warm and transmitting more than 48 years after its 1977 launch.' }
   ],
   huygens: [
-    { name: 'Gold Heat-Shielded Huygens Probe', color: '#fbbf24', yaw: 0.65, pitch: 0.25, zoom: 1.75, desc: '2.7-meter saucer probe carried by Cassini that parachuted through Titan’s thick orange haze to land on icy pebbles.' },
-    { name: 'Cassini Orbiter Main Bus & Dish', color: '#f8fafc', yaw: -0.55, pitch: 0.15, zoom: 1.90, desc: '4-meter high-gain dish and 12-instrument orbiter that studied Saturn’s rings and geyser moon Enceladus for 13 years.' },
-    { name: '3 RTGs & Magnetometer Boom', color: '#f97316', yaw: -1.45, pitch: 0.20, zoom: 1.95, desc: 'Plutonium generators and long magnetometer boom that mapped Saturn’s magnetic field and Titan’s methane weather.' }
+    { name: 'Gold Heat-Shielded Huygens Probe', color: '#fbbf24', yaw: 0.65, pitch: 0.25, zoom: 1.75, anchor: [-0.55, -0.10, 0.55], desc: '2.7-meter saucer probe carried by Cassini that parachuted through Titan’s thick orange haze to land on icy pebbles.' },
+    { name: 'Cassini Orbiter Main Bus & Dish', color: '#f8fafc', yaw: -0.55, pitch: 0.15, zoom: 1.90, anchor: [0.25, 0.45, 0.40], desc: '4-meter high-gain dish and 12-instrument orbiter that studied Saturn’s rings and geyser moon Enceladus for 13 years.' },
+    { name: '3 RTGs & Magnetometer Boom', color: '#f97316', yaw: -1.45, pitch: 0.20, zoom: 1.95, anchor: [0.80, -0.25, 0.25], desc: 'Plutonium generators and long magnetometer boom that mapped Saturn’s magnetic field and Titan’s methane weather.' }
   ],
   newhorizons: [
-    { name: 'Gold "Grand Piano" Triangular Bus', color: '#fbbf24', yaw: 0.55, pitch: 0.25, zoom: 1.75, desc: 'Compact wedge-shaped aluminum body wrapped in gold thermal blankets, carrying Clyde Tombaugh’s ashes past Pluto and Arrokoth.' },
-    { name: '2.1-Meter High-Gain Dish', color: '#f8fafc', yaw: 0.25, pitch: -0.25, zoom: 1.80, desc: 'Large white dish that took 16 months to transmit all 6.25 GB of Pluto flyby photos and spectra back to Earth.' },
-    { name: 'LORRI Telescope & Ralph Imager', color: '#22d3ee', yaw: -0.85, pitch: 0.15, zoom: 1.70, desc: 'Long-range telescopic camera that photographed Pluto’s nitrogen-ice heart (Sputnik Planitia) and snowman world Arrokoth.' },
-    { name: 'GPHS-RTG Nuclear Generator', color: '#1e293b', yaw: 1.55, pitch: 0.10, zoom: 1.85, desc: 'Finned plutonium generator powering New Horizons out past 60 AU in the deep outer Kuiper Belt.' }
+    { name: 'Gold "Grand Piano" Triangular Bus', color: '#fbbf24', yaw: 0.55, pitch: 0.25, zoom: 1.75, anchor: [-0.30, -0.15, 0.55], desc: 'Compact wedge-shaped aluminum body wrapped in gold thermal blankets, carrying Clyde Tombaugh’s ashes past Pluto and Arrokoth.' },
+    { name: '2.1-Meter High-Gain Dish', color: '#f8fafc', yaw: 0.25, pitch: -0.25, zoom: 1.80, anchor: [-0.15, 0.65, 0.35], desc: 'Large white dish that took 16 months to transmit all 6.25 GB of Pluto flyby photos and spectra back to Earth.' },
+    { name: 'LORRI Telescope & Ralph Imager', color: '#22d3ee', yaw: -0.85, pitch: 0.15, zoom: 1.70, anchor: [0.55, 0.15, 0.45], desc: 'Long-range telescopic camera that photographed Pluto’s nitrogen-ice heart (Sputnik Planitia) and snowman world Arrokoth.' },
+    { name: 'GPHS-RTG Nuclear Generator', color: '#1e293b', yaw: 1.55, pitch: 0.10, zoom: 1.85, anchor: [-0.80, 0.05, 0.20], desc: 'Finned plutonium generator powering New Horizons out past 60 AU in the deep outer Kuiper Belt.' }
   ]
 };
 
