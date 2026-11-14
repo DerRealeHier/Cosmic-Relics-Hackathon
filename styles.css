@@ -525,20 +525,52 @@
     }
   }
 
-  .glb-upload-label {
-    cursor: pointer;
-    color: #fcd34d;
-    text-decoration: underline;
-    text-decoration-color: rgba(251, 191, 36, 0.5);
-    text-underline-offset: 2px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    transition: color 150ms ease;
+  /* Contextual Official NASA Hover Links inside Mission Story & Science Text */
+  .nasa-inline-link {
+    position: relative;
+    color: #7dd3fc;
+    text-decoration: none;
+    border-bottom: 1.5px dotted rgba(56, 189, 248, 0.7);
+    border-radius: 0.2rem;
+    padding-inline: 0.08rem;
+    transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
   }
 
-  .glb-upload-label:hover {
+  .nasa-inline-link:hover,
+  .nasa-inline-link:focus-visible {
     color: #fef08a;
+    background: rgba(56, 189, 248, 0.14);
+    border-bottom-color: #fbbf24;
+    outline: none;
+  }
+
+  .nasa-inline-link::after {
+    content: attr(data-nasa-tip);
+    position: absolute;
+    inset-block-end: calc(100% + 7px);
+    inset-inline-start: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(2, 6, 23, 0.96);
+    color: #e0f2fe;
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    border-radius: 0.5rem;
+    padding: 0.28rem 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 60;
+    transition: opacity 140ms ease, transform 140ms ease;
+  }
+
+  .nasa-inline-link:hover::after,
+  .nasa-inline-link:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 
   /* Toast Inner */

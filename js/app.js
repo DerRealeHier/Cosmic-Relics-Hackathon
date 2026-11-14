@@ -23,6 +23,74 @@ function getActiveArtifact() {
   return list[currentIndex] || list[0];
 }
 
+// Curated official NASA domain links (only *.nasa.gov) for interactive hover tooltips in prose
+const NASA_INLINE_LINK_RULES = [
+  { re: /\bLaser Ranging Retroreflector\b|\bLRRR\b/, url: 'https://science.nasa.gov/mission/apollo/lunar-laser-ranging/', tip: 'NASA Science · Lunar Laser Ranging' },
+  { re: /\bLunar Roving Vehicle\b|\bMoon rover\b|\bLRV-3\b|\bLRV\b/, url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C', tip: 'NASA NSSDCA · Apollo 15 & LRV' },
+  { re: /\bALSEP\b/, url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C', tip: 'NASA NSSDCA · Apollo 15 ALSEP' },
+  { re: /\bApollo 11\b|\bSea of Tranquility\b/, url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C', tip: 'NASA NSSDCA · Apollo 11 Eagle' },
+  { re: /\bApollo 12\b|\bSurveyor 3\b/, url: 'https://www.nasa.gov/mission/apollo-12/', tip: 'NASA · Apollo 12 & Surveyor 3' },
+  { re: /\bApollo 15\b|\bMare Imbrium\b/, url: 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C', tip: 'NASA NSSDCA · Apollo 15 Falcon' },
+  { re: /\bApollo 16\b|\bFar-UV\b/, url: 'https://www.nasa.gov/mission/apollo-16/', tip: 'NASA · Apollo 16 Mission' },
+  { re: /\bApollo 17\b|\bTaurus[–-]Littrow\b/, url: 'https://www.nasa.gov/mission/apollo-17/', tip: 'NASA · Apollo 17 Mission' },
+  { re: /\bLCROSS\b|\bBlue Ghost\b/, url: 'https://science.nasa.gov/lunar-science/clps-deliveries/to19d-firefly/', tip: 'NASA · Lunar Poles & CLPS' },
+  { re: /\bViking 1\b|\bChryse Planitia\b/, url: 'https://science.nasa.gov/mission/viking-1/', tip: 'NASA Science · Viking 1 Lander' },
+  { re: /\bMars Pathfinder\b|\bSojourner\b|\bAres Vallis\b|\bAPXS\b/, url: 'https://science.nasa.gov/mission/mars-pathfinder/', tip: 'NASA Science · Mars Pathfinder' },
+  { re: /\bOpportunity\b|\bSpirit\b|\bMeridiani Planum\b|\bGusev Crater\b/, url: 'https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/', tip: 'NASA Science · Spirit & Opportunity' },
+  { re: /\bInSight\b|\bSEIS\b|\bElysium Planitia\b/, url: 'https://science.nasa.gov/mission/insight/', tip: 'NASA Science · InSight Mars Lander' },
+  { re: /\bIngenuity\b|\bJezero Crater\b|\bPerseverance\b/, url: 'https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/', tip: 'NASA Science · Ingenuity Helicopter' },
+  { re: /\bPioneer 10\b|\bPioneer Plaque\b/, url: 'https://science.nasa.gov/mission/pioneer-10/', tip: 'NASA Science · Pioneer 10' },
+  { re: /\bGolden Record\b/, url: 'https://science.nasa.gov/mission/voyager/voyager-golden-record/', tip: 'NASA Science · Voyager Golden Record' },
+  { re: /\bVoyager 1\b|\bheliopause\b|\bPale Blue Dot\b/, url: 'https://science.nasa.gov/mission/voyager/voyager-1/', tip: 'NASA Science · Voyager 1' },
+  { re: /\bVoyager 2\b/, url: 'https://science.nasa.gov/mission/voyager/voyager-2/', tip: 'NASA Science · Voyager 2' },
+  { re: /\bCassini\b|\bHuygens\b|\bTitan\b|\bEnceladus\b/, url: 'https://science.nasa.gov/mission/cassini/', tip: 'NASA Science · Cassini–Huygens' },
+  { re: /\bNew Horizons\b|\bSputnik Planitia\b|\bArrokoth\b|\bKuiper Belt\b/, url: 'https://science.nasa.gov/mission/new-horizons/', tip: 'NASA Science · New Horizons' },
+  { re: /\bDeep Space Network\b/, url: 'https://www.nasa.gov/directorates/somd/space-communications-navigation-program/deep-space-network/', tip: 'NASA · Deep Space Network' }
+];
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function enrichWithNasaLinks(rawText, maxLinks = 3) {
+  const str = String(rawText || '');
+  if (!str) return '';
+  const candidates = [];
+  const usedUrls = new Set();
+  for (const rule of NASA_INLINE_LINK_RULES) {
+    if (usedUrls.has(rule.url)) continue;
+    const m = rule.re.exec(str);
+    if (m) {
+      candidates.push({ start: m.index, end: m.index + m[0].length, text: m[0], url: rule.url, tip: rule.tip });
+      usedUrls.add(rule.url);
+    }
+  }
+  candidates.sort((a, b) => a.start - b.start);
+  const picked = [];
+  let cursor = 0;
+  for (const c of candidates) {
+    if (c.start < cursor) continue;
+    picked.push(c);
+    cursor = c.end;
+    if (picked.length >= maxLinks) break;
+  }
+  if (!picked.length) return escapeHtml(str);
+  let out = '';
+  let pos = 0;
+  for (const c of picked) {
+    if (c.start > pos) out += escapeHtml(str.slice(pos, c.start));
+    out += `<a href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer" class="nasa-inline-link" data-nasa-tip="${escapeHtml(c.tip)} ↗">${escapeHtml(c.text)}</a>`;
+    pos = c.end;
+  }
+  if (pos < str.length) out += escapeHtml(str.slice(pos));
+  return out;
+}
+
 // =========================================================================
 // 2. TOAST NOTIFICATION HELPER
 // =========================================================================
@@ -505,7 +573,7 @@ function renderStoryContent() {
     : '';
 
   const funFactHtml = item.kidFunFact
-    ? `<div class="kid-fun-fact-card">${item.kidFunFact}</div>`
+    ? `<div class="kid-fun-fact-card">${enrichWithNasaLinks(item.kidFunFact, 2)}</div>`
     : '';
 
   const sourceFooterHtml = item.sourceUrl
@@ -530,7 +598,7 @@ function renderStoryContent() {
             <span class="kid-summary-pill">⚡ Quick Summary</span>
             <span class="kid-summary-coords">📍 ${item.region}</span>
           </div>
-          <p class="kid-short-summary-text">${shortSummaryText}</p>
+          <p class="kid-short-summary-text">${enrichWithNasaLinks(shortSummaryText, 2)}</p>
           <button
             type="button"
             id="toggle-story-expand-btn"
@@ -550,7 +618,7 @@ function renderStoryContent() {
                 ${item.story
                   .map(
                     (paragraph, i) => `
-                      <p class="${i === 0 ? 'story-lead-paragraph' : 'story-body-paragraph'}">${paragraph}</p>
+                      <p class="${i === 0 ? 'story-lead-paragraph' : 'story-body-paragraph'}">${enrichWithNasaLinks(paragraph, 3)}</p>
                     `
                   )
                   .join('')}
@@ -567,16 +635,16 @@ function renderStoryContent() {
         ${heroGalleryHtml}
         <div class="tech-card">
           <div class="tech-label tech-label-sky">Remaining NASA Hardware</div>
-          <div class="tech-value-strong">${item.tech.hardware}</div>
+          <div class="tech-value-strong">${enrichWithNasaLinks(item.tech.hardware, 2)}</div>
         </div>
         <div class="tech-grid-2">
           <div class="tech-card">
             <div class="tech-label tech-label-amber">Mass</div>
-            <div class="tech-value">${item.tech.mass}</div>
+            <div class="tech-value">${escapeHtml(item.tech.mass)}</div>
           </div>
           <div class="tech-card">
             <div class="tech-label tech-label-amber">Dimensions</div>
-            <div class="tech-value">${item.tech.dimensions}</div>
+            <div class="tech-value">${escapeHtml(item.tech.dimensions)}</div>
           </div>
         </div>
         <button
@@ -593,7 +661,7 @@ function renderStoryContent() {
               <div class="story-full-expanded-box">
                 <div class="tech-card">
                   <div class="tech-label tech-label-emerald">Condition in Space Vacuum</div>
-                  <p class="tech-value">${item.tech.survival}</p>
+                  <p class="tech-value">${enrichWithNasaLinks(item.tech.survival, 2)}</p>
                 </div>
                 ${sourceFooterHtml}
               </div>
@@ -613,7 +681,7 @@ function renderStoryContent() {
         </div>
         <div class="science-fact-card">
           <span class="science-star" aria-hidden="true">✦</span>
-          <p>${firstFact}</p>
+          <p>${enrichWithNasaLinks(firstFact, 2)}</p>
         </div>
         ${
           extraFacts.length > 0
@@ -638,7 +706,7 @@ function renderStoryContent() {
                     (fact) => `
                       <div class="science-fact-card">
                         <span class="science-star" aria-hidden="true">✦</span>
-                        <p>${fact}</p>
+                        <p>${enrichWithNasaLinks(fact, 2)}</p>
                       </div>
                     `
                   )
@@ -1084,7 +1152,7 @@ function openModelInspector() {
   const item = getActiveArtifact();
   if (!modal || !item || !horizon3d) return;
 
-  const { geom, isOfficial, isCustom } = horizon3d.getActiveMonumentGeom();
+  const { geom, isOfficial } = horizon3d.getActiveMonumentGeom();
   const titleEl = document.getElementById('inspector-modal-title');
   const kickerEl = document.getElementById('inspector-model-kicker');
   const partsListEl = document.getElementById('inspector-parts-list');
@@ -1094,11 +1162,9 @@ function openModelInspector() {
 
   if (titleEl) titleEl.textContent = item.title;
   if (kickerEl) {
-    kickerEl.textContent = isCustom
-      ? 'Custom .GLB Model · Interactive 3D Component Inspector'
-      : isOfficial
-        ? 'Official NASA 3D Model (Comic Cel-Shaded) · Click Parts to Focus'
-        : 'Detailed Comic 3D Spacecraft · Click Parts to Focus';
+    kickerEl.textContent = isOfficial
+      ? 'Official NASA 3D Model (Comic Cel-Shaded) · Click Parts to Focus'
+      : 'Detailed Comic 3D Spacecraft · Click Parts to Focus';
   }
 
   const parts = SPACECRAFT_COMPONENTS[item.id] || [];
@@ -1142,7 +1208,18 @@ function openModelInspector() {
           return;
         }
         btn.classList.add('is-selected');
-        inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom, pos: p.pos || null, anchor: p.anchor || null, color: p.color || null, name: p.name });
+        inspector3d.focusPart({
+          yaw: p.yaw,
+          pitch: p.pitch,
+          zoom: p.zoom,
+          pos: p.pos || null,
+          anchor: p.anchor || null,
+          glbPos: p.glbPos || null,
+          glbAnchor: p.glbAnchor || null,
+          glbMatch: p.glbMatch || null,
+          color: p.color || null,
+          name: p.name
+        });
         if (spinBtn) {
           spinBtn.disabled = true;
           spinBtn.setAttribute('aria-pressed', 'false');
@@ -1251,32 +1328,9 @@ function initApp() {
           : '🌕 Full Globe (Hover Bottom)';
       }
     },
-    onGlbLoaded: (name) => {
-      const statusLabel = document.getElementById('glb-status-label');
-      if (statusLabel) {
-        statusLabel.textContent = `Custom .GLB Loaded: ${name}`;
-      }
-      showToast(`✅ NASA 3D Model "${name}" placed on horizon!`);
-    }
   });
 
   horizon3d.init();
-
-  // Custom NASA .GLB upload input
-  const glbInput = document.getElementById('nasa-glb-upload');
-  if (glbInput) {
-    glbInput.addEventListener('change', async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      showToast(`Loading NASA 3D model: ${file.name}...`);
-      try {
-        await horizon3d.loadCustomGlbFile(file);
-      } catch (err) {
-        console.error(err);
-        showToast('⚠️ Could not parse .glb file. Please choose a valid binary glTF (.glb).');
-      }
-    });
-  }
 
   // Realm Switcher Buttons (Moon / Mars / Universe)
   document.querySelectorAll('[data-realm]').forEach((btn) => {

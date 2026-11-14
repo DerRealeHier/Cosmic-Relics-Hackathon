@@ -747,6 +747,7 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
   const metas = [];
   const pivots = [];
   const indices = [];
+  const rawPrimRecords = [];
 
   function decodeDracoPrimitive(dracoExt) {
     const bv = jsonChunk.bufferViews[dracoExt.bufferView];
@@ -810,7 +811,7 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
     }
   }
 
-  function appendPrimitive(prim, worldMat) {
+  function appendPrimitive(prim, worldMat, nodeName = '') {
     if (prim.mode !== undefined && prim.mode !== 4) return; // TRIANGLES only
     const dracoExt = prim.extensions?.KHR_draco_mesh_compression;
     let posArr, normArr, uvArr, colArr, idxArr;
@@ -838,8 +839,10 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
     let baseFactor = [0.85, 0.88, 0.92];
     let emissiveBoost = 0.08;
     let texImg = null;
+    let matName = '';
     if (prim.material !== undefined && jsonChunk.materials?.[prim.material]) {
       const mat = jsonChunk.materials[prim.material];
+      matName = mat.name || '';
       const pbr = mat.pbrMetallicRoughness || {};
       if (Array.isArray(pbr.baseColorFactor)) {
         baseFactor = [pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2]];
@@ -930,6 +933,12 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
     for (let i = 0; i < idxArr.length; i++) {
       indices.push(baseVertex + idxArr[i]);
     }
+    rawPrimRecords.push({
+      nodeName,
+      matName,
+      startVertex: baseVertex,
+      vertCount
+    });
   }
 
   function walkNode(nodeIdx, parentMat) {
@@ -948,7 +957,7 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
     const worldMat = mat4Multiply(parentMat, localMat);
     if (node.mesh !== undefined && jsonChunk.meshes?.[node.mesh]) {
       for (const prim of jsonChunk.meshes[node.mesh].primitives || []) {
-        appendPrimitive(prim, worldMat);
+        appendPrimitive(prim, worldMat, node.name || '');
       }
     }
     for (const childIdx of node.children || []) {
@@ -989,6 +998,36 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
     pivots[i + 2] = (pivots[i + 2] - cz) * scale;
   }
 
+  const nodeBounds = rawPrimRecords.map((rec) => {
+    let nMinX = Infinity, nMinY = Infinity, nMinZ = Infinity;
+    let nMaxX = -Infinity, nMaxY = -Infinity, nMaxZ = -Infinity;
+    let sr = 0, sg = 0, sb = 0, sc = 0;
+    const step = Math.max(1, Math.floor(rec.vertCount / 120));
+    for (let k = 0; k < rec.vertCount; k += step) {
+      const vi = rec.startVertex + k;
+      const x = positions[vi * 3], y = positions[vi * 3 + 1], z = positions[vi * 3 + 2];
+      if (x < nMinX) nMinX = x; if (x > nMaxX) nMaxX = x;
+      if (y < nMinY) nMinY = y; if (y > nMaxY) nMaxY = y;
+      if (z < nMinZ) nMinZ = z; if (z > nMaxZ) nMaxZ = z;
+      sr += colors[vi * 3]; sg += colors[vi * 3 + 1]; sb += colors[vi * 3 + 2]; sc++;
+    }
+    return {
+      nodeName: rec.nodeName,
+      matName: rec.matName,
+      startVertex: rec.startVertex,
+      vertCount: rec.vertCount,
+      minX: nMinX, maxX: nMaxX,
+      minY: nMinY, maxY: nMaxY,
+      minZ: nMinZ, maxZ: nMaxZ,
+      cx: (nMinX + nMaxX) * 0.5,
+      cy: (nMinY + nMaxY) * 0.5,
+      cz: (nMinZ + nMaxZ) * 0.5,
+      r: sc ? sr / sc : 0.8,
+      g: sc ? sg / sc : 0.8,
+      b: sc ? sb / sc : 0.8
+    };
+  });
+
   if (addBeaconAura) {
     const auraRing = makeRingGeometry(0.46, 0.54, 40);
     const baseV = positions.length / 3;
@@ -1012,7 +1051,8 @@ async function parseGlbBuffer(arrayBuffer, opts = {}) {
     colors: new Float32Array(colors),
     metas: new Float32Array(metas),
     pivots: new Float32Array(pivots),
-    indices: useUint32 ? new Uint32Array(indices) : new Uint16Array(indices)
+    indices: useUint32 ? new Uint32Array(indices) : new Uint16Array(indices),
+    nodeBounds
   };
 }
 
@@ -3277,6 +3317,7 @@ export class Horizon3DEngine {
 export class ModelInspector3D {
   constructor(canvas, onCalloutProject = null) {
     this.canvas = canvas;
+    if (canvas) canvas.__inspector3d = this;
     this.onCalloutProject = onCalloutProject;
     this.gl = canvas ? canvas.getContext('webgl2', { antialias: true, alpha: true }) : null;
     this.prog = null;
@@ -3284,6 +3325,7 @@ export class ModelInspector3D {
     this.mesh = null;
     this.centerY = 0;
     this.geomBounds = null;
+    this.geomNodeBounds = [];
     this.sampledVerts = [];
     this.highlightActive = false;
     this.highlightPos = [0, 0, 0];
@@ -3373,6 +3415,7 @@ export class ModelInspector3D {
     if (!this.gl || !geom) return;
     const gl = this.gl;
     if (this.mesh?.vao) gl.deleteVertexArray(this.mesh.vao);
+    this.geomNodeBounds = Array.isArray(geom.nodeBounds) ? geom.nodeBounds : [];
 
     let minX = Infinity, maxX = -Infinity;
     let minY = Infinity, maxY = -Infinity;
@@ -3401,17 +3444,25 @@ export class ModelInspector3D {
         sy: Math.max(0.05, maxY - minY),
         sz: Math.max(0.05, maxZ - minZ)
       };
-      const step = Math.max(1, Math.floor(totalVerts / 2000));
+      const step = Math.max(1, Math.floor(totalVerts / 2400));
       const verts = [];
+      let nbIdx = 0;
+      const nbList = this.geomNodeBounds;
       for (let i = 0; i < totalVerts; i += step) {
         if (geom.metas && geom.metas[i * 2 + 1] < -0.25) continue;
+        while (nbIdx < nbList.length && i >= (nbList[nbIdx].startVertex || 0) + (nbList[nbIdx].vertCount || 0)) {
+          nbIdx++;
+        }
+        const nb = nbIdx < nbList.length && i >= (nbList[nbIdx].startVertex || 0) ? nbList[nbIdx] : null;
         verts.push({
           x: geom.positions[i * 3],
           y: geom.positions[i * 3 + 1],
           z: geom.positions[i * 3 + 2],
           r: geom.colors ? geom.colors[i * 3] : 0.8,
           g: geom.colors ? geom.colors[i * 3 + 1] : 0.8,
-          b: geom.colors ? geom.colors[i * 3 + 2] : 0.8
+          b: geom.colors ? geom.colors[i * 3 + 2] : 0.8,
+          nodeName: nb ? nb.nodeName : '',
+          matName: nb ? nb.matName : ''
         });
       }
       this.sampledVerts = verts;
@@ -3451,7 +3502,7 @@ export class ModelInspector3D {
     this.renderFrame(performance.now());
   }
 
-  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85, pos = null, anchor = null, color = null, name = '' } = {}) {
+  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85, pos = null, anchor = null, glbPos = null, glbAnchor = null, glbMatch = null, color = null, name = '' } = {}) {
     this.autoSpin = false;
     this.rotationLocked = true;
     this.isDragging = false;
@@ -3461,15 +3512,24 @@ export class ModelInspector3D {
     this.targetZoom = zoom;
     this.highlightActive = true;
     this.highlightLabel = name;
-    if (Array.isArray(pos) && pos.length === 3) {
-      this.highlightPos = pos;
+    const isGlb = this.geomNodeBounds.length > 0;
+    const directPos = isGlb ? glbPos : pos;
+    const useAnchor = isGlb && Array.isArray(glbAnchor) && glbAnchor.length === 3 ? glbAnchor : anchor;
+    if (Array.isArray(directPos) && directPos.length === 3) {
+      this.highlightPos = directPos;
     } else if (this.geomBounds && this.sampledVerts.length > 0) {
       const b = this.geomBounds;
+      let pool = this.sampledVerts;
+      if (isGlb && glbMatch) {
+        const re = glbMatch instanceof RegExp ? glbMatch : new RegExp(glbMatch, 'i');
+        const matched = this.sampledVerts.filter((v) => re.test(`${v.nodeName || ''}|${v.matName || ''}`));
+        if (matched.length > 0) pool = matched;
+      }
       let tx, ty, tz;
-      if (Array.isArray(anchor) && anchor.length === 3) {
-        tx = b.cx + anchor[0] * b.sx * 0.45;
-        ty = b.cy + anchor[1] * b.sy * 0.45;
-        tz = b.cz + anchor[2] * b.sz * 0.45;
+      if (Array.isArray(useAnchor) && useAnchor.length === 3) {
+        tx = b.cx + useAnchor[0] * b.sx * 0.5;
+        ty = b.cy + useAnchor[1] * b.sy * 0.5;
+        tz = b.cz + useAnchor[2] * b.sz * 0.5;
       } else {
         tx = b.cx - Math.sin(yaw) * Math.cos(pitch) * b.sx * 0.36;
         ty = b.cy + Math.sin(pitch) * b.sy * 0.36;
@@ -3482,19 +3542,19 @@ export class ModelInspector3D {
         tb = parseInt(color.slice(5, 7), 16) / 255;
         hasColor = true;
       }
-      let bestVert = this.sampledVerts[0];
+      let bestVert = pool[0];
       let bestScore = Infinity;
       const invSx = 1 / b.sx;
       const invSy = 1 / b.sy;
       const invSz = 1 / b.sz;
-      for (let i = 0; i < this.sampledVerts.length; i++) {
-        const v = this.sampledVerts[i];
+      for (let i = 0; i < pool.length; i++) {
+        const v = pool[i];
         const dx = (v.x - tx) * invSx;
         const dy = (v.y - ty) * invSy;
         const dz = (v.z - tz) * invSz;
         const distSq = dx * dx + dy * dy + dz * dz;
         let colorPen = 0;
-        if (hasColor) {
+        if (hasColor && pool === this.sampledVerts) {
           const cr = v.r - tr;
           const cg = v.g - tg;
           const cb = v.b - tb;
@@ -3575,17 +3635,17 @@ export class ModelInspector3D {
 
     const aspect = (this.canvas.width || 1) / (this.canvas.height || 1);
     const proj = mat4Perspective((38 * Math.PI) / 180, aspect, 0.1, 50.0);
-    const camPos = [0, 0.12, this.currentZoom];
+    const camPos = [0, 0.04, this.currentZoom];
     const view = mat4LookAt(camPos, [0, 0, 0], [0, 1, 0]);
-    const model = mat4FromTranslationRotationScale(
-      0,
-      -this.centerY * 1.15,
-      0,
-      this.currentRotX,
-      this.currentRotY,
-      0,
-      1.25
-    );
+    const b = this.geomBounds;
+    const cxModel = b ? b.cx : 0;
+    const cyModel = b ? b.cy : this.centerY;
+    const czModel = b ? b.cz : 0;
+    const maxDim = b ? Math.max(b.sx, b.sy, b.sz, 0.25) : 1.0;
+    const fitScale = 1.05 / maxDim;
+    const rotScale = mat4FromTranslationRotationScale(0, 0, 0, this.currentRotX, this.currentRotY, 0, fitScale);
+    const centerShift = mat4FromTranslationRotationScale(-cxModel, -cyModel, -czModel, 0, 0, 0, 1);
+    const model = mat4Multiply(rotScale, centerShift);
     const normalMat = mat3FromMat4(model);
     const pulse = 0.5 + 0.5 * Math.sin(now * 0.005);
 
