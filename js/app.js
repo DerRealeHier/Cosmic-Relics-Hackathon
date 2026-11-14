@@ -791,7 +791,9 @@ function selectMission(index) {
     horizon3d.setArtifact({
       id: item.id,
       artifactType: item.artifactType,
-      horizonAngle: item.horizonAngle
+      horizonAngle: item.horizonAngle,
+      lat: item.lat,
+      lon: item.lon
     });
   }
 

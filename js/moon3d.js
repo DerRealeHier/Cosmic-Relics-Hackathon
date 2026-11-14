@@ -361,6 +361,135 @@ function createDeterministicRng(seed = 1969) {
   };
 }
 
+function latLonToDir(latDeg, lonDeg) {
+  const theta = ((90 - latDeg) * Math.PI) / 180;
+  const phi = ((lonDeg + 90) * Math.PI) / 180;
+  const sinT = Math.sin(theta);
+  return [-Math.cos(phi) * sinT, Math.cos(theta), Math.sin(phi) * sinT];
+}
+
+function mat4FromPointNormal(pos, up, spinY = 0, scale = 1) {
+  const uLen = Math.hypot(up[0], up[1], up[2]) || 1;
+  const ux = up[0] / uLen, uy = up[1] / uLen, uz = up[2] / uLen;
+  const rx0 = Math.abs(uy) > 0.92 ? 1 : 0;
+  const ry0 = Math.abs(uy) > 0.92 ? 0 : 1;
+  const rz0 = 0;
+
+  let tx = ry0 * uz - rz0 * uy;
+  let ty = rz0 * ux - rx0 * uz;
+  let tz = rx0 * uy - ry0 * ux;
+  const tLen = Math.hypot(tx, ty, tz) || 1;
+  tx /= tLen; ty /= tLen; tz /= tLen;
+
+  const bx = ty * uz - tz * uy;
+  const by = tz * ux - tx * uz;
+  const bz = tx * uy - ty * ux;
+
+  const c = Math.cos(spinY), s = Math.sin(spinY);
+  const rightX = (tx * c + bx * s) * scale;
+  const rightY = (ty * c + by * s) * scale;
+  const rightZ = (tz * c + bz * s) * scale;
+  const fwdX = (bx * c - tx * s) * scale;
+  const fwdY = (by * c - ty * s) * scale;
+  const fwdZ = (bz * c - tz * s) * scale;
+
+  const out = new Float32Array(16);
+  out[0] = rightX; out[1] = rightY; out[2] = rightZ; out[3] = 0;
+  out[4] = ux * scale; out[5] = uy * scale; out[6] = uz * scale; out[7] = 0;
+  out[8] = fwdX; out[9] = fwdY; out[10] = fwdZ; out[11] = 0;
+  out[12] = pos[0]; out[13] = pos[1]; out[14] = pos[2]; out[15] = 1;
+  return out;
+}
+
+function gaussSpot(ux, uy, uz, latDeg, lonDeg, sigmaRad, amp) {
+  const d = latLonToDir(latDeg, lonDeg);
+  const dot = Math.max(-1, Math.min(1, ux * d[0] + uy * d[1] + uz * d[2]));
+  const ang = Math.acos(dot);
+  const k = ang / sigmaRad;
+  return amp * Math.exp(-k * k);
+}
+
+function craterProfile(ux, uy, uz, latDeg, lonDeg, radRad, depth, rim) {
+  const d = latLonToDir(latDeg, lonDeg);
+  const dot = Math.max(-1, Math.min(1, ux * d[0] + uy * d[1] + uz * d[2]));
+  const ang = Math.acos(dot);
+  if (ang > radRad * 1.45) return 0;
+  const t = ang / radRad;
+  const bowl = t < 1.0 ? -depth * Math.cos(t * Math.PI * 0.5) : 0;
+  const rk = (t - 1.0) / 0.22;
+  const ridge = rim * Math.exp(-rk * rk);
+  return bowl + ridge;
+}
+
+function evalComicPlanetPoint(ux, uy, uz, radius = 5.2, body = 'moon') {
+  const vx = ux * radius;
+  const vy = uy * radius;
+  const vz = uz * radius;
+
+  if (body === 'mars') {
+    // Distinct Martian planetary geometry: oblate polar flattening + Tharsis bulge + Olympus Mons + Valles Marineris canyon + Hellas basin
+    const oblate = 1.0 - 0.032 * uy * uy;
+    const tharsisBulge = gaussSpot(ux, uy, uz, 2.0, -106.0, 0.52, 0.14);
+    const olympus = gaussSpot(ux, uy, uz, 18.65, -133.8, 0.14, 0.34) - gaussSpot(ux, uy, uz, 18.65, -133.8, 0.035, 0.09);
+    const ascraeus = gaussSpot(ux, uy, uz, 11.8, -104.1, 0.08, 0.20);
+    const pavonis = gaussSpot(ux, uy, uz, 1.5, -112.8, 0.08, 0.19);
+    const arsia = gaussSpot(ux, uy, uz, -8.3, -120.1, 0.09, 0.21);
+    const elysium = gaussSpot(ux, uy, uz, 25.0, 147.2, 0.11, 0.20);
+    const hellas = gaussSpot(ux, uy, uz, -42.4, 70.5, 0.34, -0.22);
+
+    // Valles Marineris equatorial canyon slash (-8..-19 S, -92..-32 W)
+    const latDeg = (Math.asin(Math.max(-1, Math.min(1, uy))) * 180) / Math.PI;
+    const lonDeg = ((Math.atan2(ux, uz) * 180) / Math.PI);
+    const dLatCanyon = (latDeg + 13.5) / 5.2;
+    const lonSlope = lonDeg > -92 && lonDeg < -32 ? 1.0 : Math.exp(-Math.pow((lonDeg + 62) / 38, 4));
+    const canyon = -0.25 * Math.exp(-dLatCanyon * dLatCanyon) * (lonDeg > -95 && lonDeg < -28 ? lonSlope : 0);
+
+    // Stepped polar ice caps + angular Martian canyon/mesa relief (distinct from circular lunar craters)
+    const polarCap = Math.abs(latDeg) > 79 ? 0.065 * Math.min(1, (Math.abs(latDeg) - 79) / 5) : 0;
+    const windRidges =
+      Math.sin(vx * 2.2 - vz * 2.6) * 0.032 +
+      Math.cos(vy * 5.8 + vx * 3.4) * 0.022 +
+      Math.sin(vz * 8.1 + vy * 4.7) * 0.012;
+
+    const r =
+      radius * oblate +
+      tharsisBulge +
+      olympus +
+      ascraeus +
+      pavonis +
+      arsia +
+      elysium +
+      hellas +
+      canyon +
+      polarCap +
+      windRidges;
+    return [ux * r, uy * r, uz * r];
+  }
+
+  // Moon: spherical lunar silhouette + dark lowland Maria basins + crisp ringed circular impact craters
+  const maria =
+    gaussSpot(ux, uy, uz, 32.8, -15.6, 0.36, -0.10) + // Imbrium
+    gaussSpot(ux, uy, uz, 28.0, 17.5, 0.26, -0.09) +  // Serenitatis
+    gaussSpot(ux, uy, uz, 8.5, 31.4, 0.28, -0.08) +   // Tranquillitatis
+    gaussSpot(ux, uy, uz, 18.4, -57.4, 0.44, -0.09) + // Procellarum
+    gaussSpot(ux, uy, uz, 17.0, 59.1, 0.16, -0.11) +  // Crisium
+    gaussSpot(ux, uy, uz, -53.0, -169.0, 0.48, -0.13); // South Pole-Aitken
+  const craters =
+    craterProfile(ux, uy, uz, -43.3, -11.2, 0.11, 0.14, 0.055) + // Tycho
+    craterProfile(ux, uy, uz, 9.6, -20.1, 0.10, 0.12, 0.05) +   // Copernicus
+    craterProfile(ux, uy, uz, 23.7, -47.4, 0.08, 0.11, 0.045) + // Aristarchus
+    craterProfile(ux, uy, uz, 51.6, -9.3, 0.08, 0.10, 0.04) +   // Plato
+    craterProfile(ux, uy, uz, -84.0, -49.0, 0.09, 0.13, 0.045) + // Cabeus polar pit
+    craterProfile(ux, uy, uz, 6.0, -68.0, 0.09, 0.11, 0.04);
+  const microRelief =
+    Math.sin(vx * 3.1 + vy * 2.4) * 0.045 +
+    Math.cos(vz * 4.2 - vx * 2.8) * 0.035 +
+    Math.sin(vy * 7.5 + vz * 6.0) * 0.015;
+
+  const r = radius + maria + craters + microRelief;
+  return [ux * r, uy * r, uz * r];
+}
+
 function createComicSurfaceCanvas(realm = 'moon') {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -370,7 +499,7 @@ function createComicSurfaceCanvas(realm = 'moon') {
   const palettes = {
     moon: {
       base: '#94a3b8',
-      patchInner: 'rgba(51, 65, 85, 0.42)',
+      patchInner: 'rgba(51, 65, 85, 0.45)',
       patchOuter: 'rgba(51, 65, 85, 0)',
       craterFill: 'rgba(30, 41, 59, 0.45)',
       rimLight: 'rgba(241, 245, 249, 0.62)',
@@ -379,7 +508,7 @@ function createComicSurfaceCanvas(realm = 'moon') {
     },
     mars: {
       base: '#d97745',
-      patchInner: 'rgba(124, 45, 18, 0.44)',
+      patchInner: 'rgba(124, 45, 18, 0.46)',
       patchOuter: 'rgba(124, 45, 18, 0)',
       craterFill: 'rgba(67, 20, 7, 0.45)',
       rimLight: 'rgba(254, 215, 170, 0.62)',
@@ -400,15 +529,89 @@ function createComicSurfaceCanvas(realm = 'moon') {
   const pal = palettes[realm] || palettes.moon;
   const rand = createDeterministicRng(pal.seed);
 
+  // Maps geographic (lat, lon) onto equirectangular canvas respecting WebGL bottom-to-top V upload
+  const llToCanvas = (latDeg, lonDeg) => {
+    const u = (((lonDeg + 90) % 360) + 360) % 360 / 360;
+    const v = (latDeg + 90) / 180;
+    return [u * canvas.width, v * canvas.height];
+  };
+
   // 1. Base comic regolith fill
   ctx.fillStyle = pal.base;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 2. Subtle maria / albedo patches
-  for (let i = 0; i < 45; i++) {
+  // 2. Geographically aligned major planetary landmarks (Moon Maria vs Mars Volcanoes/Valles Marineris/Polar Caps)
+  if (realm === 'moon') {
+    const mariaSpots = [
+      [32.8, -15.6, 105, 'rgba(51, 65, 85, 0.58)'],   // Mare Imbrium
+      [28.0, 17.5, 78, 'rgba(51, 65, 85, 0.55)'],     // Mare Serenitatis
+      [8.5, 31.4, 84, 'rgba(51, 65, 85, 0.58)'],      // Mare Tranquillitatis (Apollo 11)
+      [18.4, -57.4, 130, 'rgba(51, 65, 85, 0.50)'],   // Oceanus Procellarum (Surveyor 3)
+      [17.0, 59.1, 48, 'rgba(30, 41, 59, 0.64)'],     // Mare Crisium (Blue Ghost M1)
+      [-53.0, -169.0, 125, 'rgba(51, 65, 85, 0.52)']  // South Pole-Aitken
+    ];
+    for (const [lat, lon, r, col] of mariaSpots) {
+      const [cx, cy] = llToCanvas(lat, lon);
+      const grad = ctx.createRadialGradient(cx, cy, r * 0.15, cx, cy, r);
+      grad.addColorStop(0, col);
+      grad.addColorStop(1, 'rgba(51, 65, 85, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Bright Tycho crater & comic ejecta rays
+    const [tx, ty] = llToCanvas(-43.3, -11.2);
+    ctx.strokeStyle = 'rgba(241, 245, 249, 0.42)';
+    ctx.lineWidth = 2.2;
+    for (let a = 0; a < 9; a++) {
+      const ang = (a * Math.PI * 2) / 9 + 0.2;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx + Math.cos(ang) * 95, ty + Math.sin(ang) * 70);
+      ctx.stroke();
+    }
+  } else if (realm === 'mars') {
+    const marsRegions = [
+      [8.4, 69.5, 92, 'rgba(90, 32, 16, 0.55)'],      // Syrtis Major dark basalt
+      [48.0, -21.0, 105, 'rgba(104, 38, 18, 0.45)'],  // Acidalia Planitia
+      [18.65, -133.8, 52, 'rgba(251, 146, 60, 0.60)'],// Olympus Mons shield cone
+      [25.0, 147.2, 46, 'rgba(245, 158, 11, 0.45)'],  // Elysium Mons
+      [-42.4, 70.5, 96, 'rgba(253, 186, 116, 0.48)']  // Hellas Planitia pale dust basin
+    ];
+    for (const [lat, lon, r, col] of marsRegions) {
+      const [cx, cy] = llToCanvas(lat, lon);
+      const grad = ctx.createRadialGradient(cx, cy, r * 0.1, cx, cy, r);
+      grad.addColorStop(0, col);
+      grad.addColorStop(1, 'rgba(124, 45, 18, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Valles Marineris grand canyon dark rift scar
+    const [vx0, vy0] = llToCanvas(-13.5, -92.0);
+    const [vx1, vy1] = llToCanvas(-14.2, -32.0);
+    ctx.strokeStyle = 'rgba(41, 13, 5, 0.78)';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(vx0, vy0);
+    ctx.lineTo((vx0 + vx1) * 0.5, vy0 + 6);
+    ctx.lineTo(vx1, vy1);
+    ctx.stroke();
+
+    // Bright North & South Polar Ice Caps
+    ctx.fillStyle = 'rgba(248, 250, 252, 0.88)';
+    ctx.fillRect(0, canvas.height - 32, canvas.width, 32);
+    ctx.fillRect(0, 0, canvas.width, 28);
+  }
+
+  // 3. Subtle regional albedo patches
+  for (let i = 0; i < 36; i++) {
     const mx = rand() * canvas.width;
     const my = rand() * canvas.height;
-    const mr = rand() * 80 + 25;
+    const mr = rand() * 75 + 22;
     const grad = ctx.createRadialGradient(mx, my, 4, mx, my, mr);
     grad.addColorStop(0, pal.patchInner);
     grad.addColorStop(1, pal.patchOuter);
@@ -418,11 +621,12 @@ function createComicSurfaceCanvas(realm = 'moon') {
     ctx.fill();
   }
 
-  // 3. Hand-drawn comic impact craters with bright highlight & dark ink rim arcs
-  for (let i = 0; i < 160; i++) {
+  // 4. Hand-drawn comic impact craters with bright highlight & dark ink rim arcs
+  const craterCount = realm === 'mars' ? 95 : 165;
+  for (let i = 0; i < craterCount; i++) {
     const cx = rand() * canvas.width;
     const cy = rand() * canvas.height;
-    const cr = rand() * 20 + 3;
+    const cr = rand() * 19 + 3;
 
     ctx.fillStyle = pal.craterFill;
     ctx.beginPath();
@@ -445,13 +649,12 @@ function createComicSurfaceCanvas(realm = 'moon') {
   return canvas;
 }
 
-function buildComicReliefSphere(radius = 5.2, latBands = 96, lonBands = 96) {
+function buildComicReliefSphere(radius = 5.2, latBands = 112, lonBands = 112, body = 'moon') {
   const positions = [];
   const normals = [];
   const uvs = [];
   const indices = [];
 
-  // Helper to evaluate the exact displaced surface position at (theta, phi)
   function evalSurfacePoint(theta, phi) {
     const sinTheta = Math.sin(theta);
     const cosTheta = Math.cos(theta);
@@ -461,19 +664,7 @@ function buildComicReliefSphere(radius = 5.2, latBands = 96, lonBands = 96) {
     const ux = -cosPhi * sinTheta;
     const uy = cosTheta;
     const uz = sinPhi * sinTheta;
-
-    const vx = ux * radius;
-    const vy = uy * radius;
-    const vz = uz * radius;
-
-    // Exact wave-crater relief formula from stille_denkm_ler_des_mondes_nasa_space_apps(1).html (lines 764-768)
-    const relief =
-      Math.sin(vx * 3.1 + vy * 2.4) * 0.045 +
-      Math.cos(vz * 4.2 - vx * 2.8) * 0.035 +
-      Math.sin(vy * 7.5 + vz * 6.0) * 0.015;
-
-    const r = radius + relief;
-    return [ux * r, uy * r, uz * r];
+    return evalComicPlanetPoint(ux, uy, uz, radius, body);
   }
 
   const eps = 0.008;
@@ -484,7 +675,6 @@ function buildComicReliefSphere(radius = 5.2, latBands = 96, lonBands = 96) {
       const p = evalSurfacePoint(theta, phi);
       positions.push(p[0], p[1], p[2]);
 
-      // Compute vertex normal accounting for the comic wave relief
       const pTheta = evalSurfacePoint(Math.min(Math.PI, theta + eps), phi);
       const pPhi = evalSurfacePoint(theta, phi + eps);
       const tx = pTheta[0] - p[0], ty = pTheta[1] - p[1], tz = pTheta[2] - p[2];
@@ -2706,7 +2896,10 @@ export class Horizon3DEngine {
     this.realm = 'moon';
     this.artifactId = 'apollo11';
     this.artifactType = 'lander';
+    this.artifactLat = 0.6741;
+    this.artifactLon = 23.4730;
     this.customGlbMesh = null;
+    if (this.canvas) this.canvas.__horizon3d = this;
 
     // Planet rotation & zoom state matching stille_denkm_ler_des_mondes_nasa_space_apps(1).html
     this.targetRotY = 0.25;
@@ -2733,6 +2926,7 @@ export class Horizon3DEngine {
 
     this.monumentScreenPos = { x: 0, y: 0 };
 
+    this.planetMeshes = {};
     this.planetVao = null;
     this.planetIndexCount = 0;
     this.planetIndexType = 0;
@@ -2785,9 +2979,12 @@ export class Horizon3DEngine {
       uHighlightPos: gl.getUniformLocation(this.monumentProg, 'uHighlightPos')
     };
 
-    // 1. Build the exact 96x96 comic relief sphere (radius = 5.2) from (1).html
-    const sphere = buildComicReliefSphere(5.2, 96, 96);
-    this._uploadPlanetGeometry(sphere);
+    // 1. Build TWO genuinely distinct 3D comic planet meshes: cratered Moon sphere vs oblate Olympus/Marineris Mars!
+    this.planetMeshes.moon = this._createPlanetVao(buildComicReliefSphere(5.2, 112, 112, 'moon'));
+    this.planetMeshes.mars = this._createPlanetVao(buildComicReliefSphere(5.2, 112, 112, 'mars'));
+    this.planetVao = this.planetMeshes.moon.vao;
+    this.planetIndexCount = this.planetMeshes.moon.count;
+    this.planetIndexType = this.planetMeshes.moon.type;
 
     // 2. Build comic hand-drawn crater textures for Moon, Mars, and Universe
     ['moon', 'mars', 'universe'].forEach((r) => {
@@ -2816,10 +3013,8 @@ export class Horizon3DEngine {
     });
   }
 
-  _uploadPlanetGeometry(geom) {
+  _createPlanetVao(geom) {
     const gl = this.gl;
-    if (this.planetVao) gl.deleteVertexArray(this.planetVao);
-
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
 
@@ -2847,10 +3042,11 @@ export class Horizon3DEngine {
 
     gl.bindVertexArray(null);
 
-    this.planetVao = vao;
-    this.planetIndexCount = geom.indices.length;
-    this.planetIndexType =
-      geom.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+    return {
+      vao,
+      count: geom.indices.length,
+      type: geom.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT
+    };
   }
 
   _uploadMonumentGeometry(geom) {
@@ -2995,12 +3191,24 @@ export class Horizon3DEngine {
     this.renderFrame(performance.now());
   }
 
+  _focusTargetGlobeLocation() {
+    const latRad = (this.artifactLat * Math.PI) / 180;
+    const lonRad = (this.artifactLon * Math.PI) / 180;
+    this.targetRotY = -lonRad;
+    this.targetRotX = Math.max(-1.05, Math.min(1.05, latRad * 0.85));
+  }
+
   setFullGlobeMode(enabled, manualLock = false) {
     if (this.realm === 'universe') return;
     const nextTarget = enabled ? 1.0 : 0.0;
     this.manualGlobeLock = Boolean(manualLock && enabled);
     if (this.targetGlobeProgress !== nextTarget) {
       this.targetGlobeProgress = nextTarget;
+      if (enabled) {
+        this._focusTargetGlobeLocation();
+      } else {
+        this.targetRotX = 0.0;
+      }
       this.onGlobeModeChange(enabled);
     }
   }
@@ -3011,7 +3219,7 @@ export class Horizon3DEngine {
     return nextState;
   }
 
-  setArtifact({ id, artifactType, horizonAngle }) {
+  setArtifact({ id, artifactType, horizonAngle, lat, lon }) {
     if (id) {
       this.artifactId = id;
       if (OFFICIAL_NASA_GLBS[id]) {
@@ -3021,8 +3229,13 @@ export class Horizon3DEngine {
     if (artifactType) {
       this.artifactType = artifactType;
     }
-    if (typeof horizonAngle === 'number') {
+    if (Number.isFinite(lat)) this.artifactLat = lat;
+    if (Number.isFinite(lon)) this.artifactLon = lon;
+    if (this.realm !== 'universe' && this.targetGlobeProgress >= 0.5) {
+      this._focusTargetGlobeLocation();
+    } else if (typeof horizonAngle === 'number') {
       this.targetRotY = horizonAngle;
+      this.targetRotX = 0.0;
     }
     this.monumentScale = 1.56;
     this.targetMonumentScale = this.monumentBaseScale;
@@ -3076,8 +3289,9 @@ export class Horizon3DEngine {
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         this.dragMoved = true;
       }
+      const maxTilt = this.targetGlobeProgress >= 0.5 ? 1.25 : 0.55;
       this.targetRotY += dx * 0.009;
-      this.targetRotX = Math.max(-0.55, Math.min(0.55, this.targetRotX + dy * 0.006));
+      this.targetRotX = Math.max(-maxTilt, Math.min(maxTilt, this.targetRotX + dy * 0.006));
 
       // Also allow dragging vertically to pull the Moon up into the center or push it back down!
       if (this.realm !== 'universe') {
@@ -3180,32 +3394,53 @@ export class Horizon3DEngine {
     const lookY = (isMobile ? 0.05 : -0.35) * (1.0 - g);
     const view = mat4LookAt(camPos, [lookX, lookY, 0.0], [0, 1, 0]);
 
-    // Interpolate Planet center & scale so at g=0 it forms a clean, less-zoomed bottom horizon,
-    // and at g=1 the entire 3D Moon/Mars globe sits compact & completely visible in the center of the screen!
+    // Interpolate Planet center & scale so at g=0 it forms a clean bottom horizon,
+    // and at g=1 the entire 3D Moon/Mars globe centers with the spacecraft planted on its real (lat, lon) surface spot!
     const planetScale = (isMobile ? 0.36 : 0.56) * (1.0 - g) + (isMobile ? 0.17 : 0.21) * g;
     const planetCenterY = (isMobile ? -1.95 : -3.72) * (1.0 - g) - 0.05 * g;
+    const globeTiltX = this.currentRotX * (0.15 + 0.85 * g);
 
-    // Monument local coordinates sitting on top of the planet ridge [0.85, 5.14, 0.55]
-    const planetModel = mat4FromTranslationRotationScale(
-      0.0,
-      planetCenterY,
-      0.0,
-      this.currentRotX * 0.45 * g,
-      this.currentRotY,
-      0.0,
-      planetScale
-    );
-    const ridgeX = planetModel[0] * 0.85 + planetModel[4] * 5.14 + planetModel[8] * 0.55 + planetModel[12];
-    const ridgeY = planetModel[1] * 0.85 + planetModel[5] * 5.14 + planetModel[9] * 0.55 + planetModel[13];
-    const ridgeZ = planetModel[2] * 0.85 + planetModel[6] * 5.14 + planetModel[10] * 0.55 + planetModel[14];
+    // Spin longitude around planet's polar axis first, then tilt pitch toward viewer, then position globe in scene
+    const planetRotYawScale = mat4FromTranslationRotationScale(0.0, 0.0, 0.0, 0.0, this.currentRotY, 0.0, planetScale);
+    const planetTiltTranslate = mat4FromTranslationRotationScale(0.0, planetCenterY, 0.0, globeTiltX, 0.0, 0.0, 1.0);
+    const planetModel = mat4Multiply(planetTiltTranslate, planetRotYawScale);
 
-    const beaconX = planetModel[0] * 0.85 + planetModel[4] * 5.49 + planetModel[8] * 0.55 + planetModel[12];
-    const beaconY = planetModel[1] * 0.85 + planetModel[5] * 5.49 + planetModel[9] * 0.55 + planetModel[13];
-    const beaconZ = planetModel[2] * 0.85 + planetModel[6] * 5.49 + planetModel[10] * 0.55 + planetModel[14];
+    // Smoothly morph monument surface anchor from Horizon ridge (g=0) to exact mission (lat, lon) on Moon/Mars (g=1)
+    const activeBody = this.realm === 'mars' ? 'mars' : 'moon';
+    const hLen = Math.hypot(0.85, 5.14, 0.55) || 1;
+    const hDir = [0.85 / hLen, 5.14 / hLen, 0.55 / hLen];
+    const hSurf = evalComicPlanetPoint(hDir[0], hDir[1], hDir[2], 5.2, activeBody);
+    const gDir = latLonToDir(this.artifactLat, this.artifactLon);
+    const gSurf = evalComicPlanetPoint(gDir[0], gDir[1], gDir[2], 5.2, activeBody);
+    const blend = g * g * (3.0 - 2.0 * g);
+
+    const posLocal = [
+      hSurf[0] * (1 - blend) + (gSurf[0] - gDir[0] * 0.03) * blend,
+      hSurf[1] * (1 - blend) + (gSurf[1] - gDir[1] * 0.03) * blend,
+      hSurf[2] * (1 - blend) + (gSurf[2] - gDir[2] * 0.03) * blend
+    ];
+    let upX = hDir[0] * (1 - blend) + gDir[0] * blend;
+    let upY = hDir[1] * (1 - blend) + gDir[1] * blend;
+    let upZ = hDir[2] * (1 - blend) + gDir[2] * blend;
+    const upLen = Math.hypot(upX, upY, upZ) || 1;
+    upX /= upLen; upY /= upLen; upZ /= upLen;
+    const upLocal = [upX, upY, upZ];
+
+    const ridgeX = planetModel[0] * posLocal[0] + planetModel[4] * posLocal[1] + planetModel[8] * posLocal[2] + planetModel[12];
+    const ridgeY = planetModel[1] * posLocal[0] + planetModel[5] * posLocal[1] + planetModel[9] * posLocal[2] + planetModel[13];
+    const ridgeZ = planetModel[2] * posLocal[0] + planetModel[6] * posLocal[1] + planetModel[10] * posLocal[2] + planetModel[14];
+
+    const bxL = posLocal[0] + upLocal[0] * 0.35;
+    const byL = posLocal[1] + upLocal[1] * 0.35;
+    const bzL = posLocal[2] + upLocal[2] * 0.35;
+    const beaconX = planetModel[0] * bxL + planetModel[4] * byL + planetModel[8] * bzL + planetModel[12];
+    const beaconY = planetModel[1] * bxL + planetModel[5] * byL + planetModel[9] * byL + planetModel[13];
+    const beaconZ = planetModel[2] * bxL + planetModel[6] * byL + planetModel[10] * bzL + planetModel[14];
 
     // 1. Draw Comic Horizon / Centered Full Sphere ONLY in Moon & Mars modes!
     // In Universe mode, there is NO planet below — the 3D spacecraft flies freely through space!
     if (this.realm !== 'universe') {
+      const activePlanet = this.planetMeshes[activeBody] || this.planetMeshes.moon;
       const planetNormalMat = mat3FromMat4(planetModel);
 
       gl.useProgram(this.planetProg);
@@ -3222,22 +3457,22 @@ export class Horizon3DEngine {
         gl.uniform1i(this.planetLocs.uBaseColorTex, 0);
       }
 
-      gl.bindVertexArray(this.planetVao);
+      gl.bindVertexArray(activePlanet.vao);
 
       // Pass 1a: Comic black ink outline around the horizon/globe rim (scale = 1.006, BackSide)
       gl.enable(gl.CULL_FACE);
       gl.cullFace(gl.FRONT);
       gl.uniform1f(this.planetLocs.uOutlineScale, 1.006);
-      gl.drawElements(gl.TRIANGLES, this.planetIndexCount, this.planetIndexType, 0);
+      gl.drawElements(gl.TRIANGLES, activePlanet.count, activePlanet.type, 0);
 
-      // Pass 1b: Comic cel-shaded surface with hand-drawn craters
+      // Pass 1b: Comic cel-shaded surface with distinct terrain relief
       gl.cullFace(gl.BACK);
       gl.uniform1f(this.planetLocs.uOutlineScale, 1.0);
-      gl.drawElements(gl.TRIANGLES, this.planetIndexCount, this.planetIndexType, 0);
+      gl.drawElements(gl.TRIANGLES, activePlanet.count, activePlanet.type, 0);
     }
 
     // 2. Draw Detailed Comic 3D Artifact
-    // On Moon & Mars: sits on the planet ridge and scales proportionally with the Moon/Mars (plus extra shrink in Full Globe mode so it never looks oversized!).
+    // On Moon & Mars: stands on the horizon ridge (g=0) and moves to exact mission (lat, lon) in Full Globe mode (g=1).
     // In Universe: flies freely in 3D figure-8 flight path across the starry sky!
     const monMesh = this.customGlbMesh || this.monumentMeshes[this.artifactId] || this.monumentMeshes.apollo11;
     if (monMesh) {
@@ -3258,16 +3493,8 @@ export class Horizon3DEngine {
         monModel = mat4FromTranslationRotationScale(mx, my, mz, rx, ry, rz, renderScale);
       } else {
         const localSpin = this.reducedMotion ? 0.25 : Math.sin(now * 0.0008) * 0.35;
-        const renderScale = this.monumentScale * planetScale * (0.98 - 0.16 * g);
-        const localMon = mat4FromTranslationRotationScale(
-          0.85,
-          5.14,
-          0.55,
-          0.0,
-          localSpin,
-          -0.14,
-          renderScale / (planetScale || 1)
-        );
+        const renderScale = this.monumentScale * planetScale * (0.98 + 0.18 * g);
+        const localMon = mat4FromPointNormal(posLocal, upLocal, localSpin, renderScale / (planetScale || 1));
         monModel = mat4Multiply(planetModel, localMon);
       }
       const monNormalMat = mat3FromMat4(monModel);
