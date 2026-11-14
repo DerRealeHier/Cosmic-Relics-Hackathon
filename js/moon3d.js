@@ -492,7 +492,102 @@ function buildComicReliefSphere(radius = 5.2, latBands = 96, lonBands = 96) {
 }
 
 // Optional parser for custom user-uploaded .glb files
-async function parseGlbBuffer(arrayBuffer) {
+// ============================================================================
+// OFFICIAL NASA .GLB PARSER -> COMIC / CEL-SHADED CONVERTER
+// Traverses full glTF 2.0 node hierarchy, decodes embedded PBR textures &
+// baseColorFactors, boosts vibrancy for cel-shading, and generates per-part
+// black ink outline pivots so detailed NASA hardware looks comic-styled!
+// ============================================================================
+const OFFICIAL_NASA_GLBS = {
+  apollo11:    { url: 'assets/nasa/models/apollo-lunar-module.glb', size: 0.92, aura: true,  centerY: false },
+  viking1:     { url: 'assets/nasa/models/viking-lander.glb',       size: 0.90, aura: true,  centerY: false },
+  opportunity: { url: 'assets/nasa/models/opportunity-mer.glb',     size: 0.88, aura: true,  centerY: false },
+  insight:     { url: 'assets/nasa/models/insight-lander.glb',      size: 0.96, aura: true,  centerY: false },
+  ingenuity:   { url: 'assets/nasa/models/ingenuity-helicopter.glb',size: 0.84, aura: true,  centerY: false },
+  pioneer10:   { url: 'assets/nasa/models/pioneer10.glb',           size: 1.18, aura: false, centerY: true  },
+  voyager1:    { url: 'assets/nasa/models/voyager.glb',             size: 1.50, aura: false, centerY: true  },
+  voyager2:    { url: 'assets/nasa/models/voyager.glb',             size: 1.50, aura: false, centerY: true  },
+  huygens:     { url: 'assets/nasa/models/cassini-huygens.glb',     size: 1.24, aura: false, centerY: true  },
+  newhorizons: { url: 'assets/nasa/models/new-horizons.glb',        size: 1.10, aura: false, centerY: true  }
+};
+
+function mat4Identity() {
+  const out = new Float32Array(16);
+  out[0] = 1; out[5] = 1; out[10] = 1; out[15] = 1;
+  return out;
+}
+
+function mat4FromTRS(t, q, s) {
+  const x = q[0], y = q[1], z = q[2], w = q[3];
+  const x2 = x + x, y2 = y + y, z2 = z + z;
+  const xx = x * x2, xy = x * y2, xz = x * z2;
+  const yy = y * y2, yz = y * z2, zz = z * z2;
+  const wx = w * x2, wy = w * y2, wz = w * z2;
+  const sx = s[0], sy = s[1], sz = s[2];
+  const out = new Float32Array(16);
+  out[0] = (1 - (yy + zz)) * sx;
+  out[1] = (xy + wz) * sx;
+  out[2] = (xz - wy) * sx;
+  out[4] = (xy - wz) * sy;
+  out[5] = (1 - (xx + zz)) * sy;
+  out[6] = (yz + wx) * sy;
+  out[8] = (xz + wy) * sz;
+  out[9] = (yz - wx) * sz;
+  out[10] = (1 - (xx + yy)) * sz;
+  out[12] = t[0]; out[13] = t[1]; out[14] = t[2]; out[15] = 1;
+  return out;
+}
+
+function comicBoostRgb(r, g, b) {
+  // Prevent dark metallic NASA PBR surfaces from turning pitch black under toon shading
+  const avg = (r + g + b) / 3;
+  const sat = 1.24;
+  let cr = avg + (r - avg) * sat;
+  let cg = avg + (g - avg) * sat;
+  let cb = avg + (b - avg) * sat;
+  const lum = 0.299 * cr + 0.587 * cg + 0.114 * cb;
+  if (lum < 0.16) {
+    const lift = 0.16 - lum;
+    cr += lift * 0.9;
+    cg += lift * 0.95;
+    cb += lift * 1.1;
+  }
+  return [
+    Math.max(0.05, Math.min(1.0, cr)),
+    Math.max(0.05, Math.min(1.0, cg)),
+    Math.max(0.05, Math.min(1.0, cb))
+  ];
+}
+
+let _dracoDecoderPromise = null;
+function getDracoDecoder() {
+  if (_dracoDecoderPromise) return _dracoDecoderPromise;
+  _dracoDecoderPromise = new Promise((resolve, reject) => {
+    const initModule = () => {
+      if (typeof window.DracoDecoderModule !== 'function') {
+        reject(new Error('DracoDecoderModule unavailable'));
+        return;
+      }
+      Promise.resolve(window.DracoDecoderModule({
+        locateFile: (file) => `assets/vendor/draco/${file}`
+      })).then(resolve, reject);
+    };
+    if (typeof window.DracoDecoderModule === 'function') {
+      initModule();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'assets/vendor/draco/draco_decoder_gltf.js';
+    script.async = true;
+    script.onload = initModule;
+    script.onerror = () => reject(new Error('Failed to load Draco glTF decoder'));
+    document.head.appendChild(script);
+  });
+  return _dracoDecoderPromise;
+}
+
+async function parseGlbBuffer(arrayBuffer, opts = {}) {
+  const { targetSize = 0.96, addBeaconAura = false, centerY = false } = opts;
   const view = new DataView(arrayBuffer);
   const magic = view.getUint32(0, true);
   if (magic !== 0x46546c67) {
@@ -521,35 +616,326 @@ async function parseGlbBuffer(arrayBuffer) {
     throw new Error('Incomplete GLB chunks');
   }
 
-  const mesh = jsonChunk.meshes[0];
-  const prim = mesh.primitives[0];
+  const usesDraco =
+    jsonChunk.extensionsUsed?.includes('KHR_draco_mesh_compression') ||
+    jsonChunk.extensionsRequired?.includes('KHR_draco_mesh_compression');
+  const draco = usesDraco ? await getDracoDecoder() : null;
 
-  function getAccessorTypedArray(accessorIndex) {
-    const acc = jsonChunk.accessors[accessorIndex];
-    const bv = jsonChunk.bufferViews[acc.bufferView];
-    const byteOffset = (bv.byteOffset || 0) + (acc.byteOffset || 0);
-    const numComponents =
-      acc.type === 'SCALAR' ? 1 :
-      acc.type === 'VEC2' ? 2 :
-      acc.type === 'VEC3' ? 3 : 4;
-    const length = acc.count * numComponents;
-
-    if (acc.componentType === 5126) {
-      return new Float32Array(binChunk, byteOffset, length);
-    } else if (acc.componentType === 5123) {
-      return new Uint16Array(binChunk, byteOffset, length);
-    } else if (acc.componentType === 5125) {
-      return new Uint32Array(binChunk, byteOffset, length);
+  // Decode embedded glTF images into small 2D ImageData buffers for fast per-vertex comic color sampling
+  const decodedImages = [];
+  if (Array.isArray(jsonChunk.images) && typeof createImageBitmap === 'function') {
+    const decodeCanvas = document.createElement('canvas');
+    const decodeCtx = decodeCanvas.getContext('2d', { willReadFrequently: true });
+    for (let i = 0; i < jsonChunk.images.length; i++) {
+      const imgDef = jsonChunk.images[i];
+      if (imgDef.bufferView === undefined) {
+        decodedImages.push(null);
+        continue;
+      }
+      try {
+        const bv = jsonChunk.bufferViews[imgDef.bufferView];
+        const bytes = new Uint8Array(binChunk, bv.byteOffset || 0, bv.byteLength);
+        const blob = new Blob([bytes], { type: imgDef.mimeType || 'image/png' });
+        const bmp = await createImageBitmap(blob);
+        const w = Math.min(256, Math.max(1, bmp.width));
+        const h = Math.min(256, Math.max(1, bmp.height));
+        decodeCanvas.width = w;
+        decodeCanvas.height = h;
+        decodeCtx.clearRect(0, 0, w, h);
+        decodeCtx.drawImage(bmp, 0, 0, w, h);
+        bmp.close?.();
+        decodedImages.push({ w, h, data: decodeCtx.getImageData(0, 0, w, h).data });
+      } catch (_) {
+        decodedImages.push(null);
+      }
     }
-    throw new Error('Unsupported glTF accessor componentType: ' + acc.componentType);
   }
 
-  const positions = new Float32Array(getAccessorTypedArray(prim.attributes.POSITION));
-  const normals = prim.attributes.NORMAL !== undefined
-    ? new Float32Array(getAccessorTypedArray(prim.attributes.NORMAL))
-    : new Float32Array(positions.length);
-  const indices = getAccessorTypedArray(prim.indices);
+  const COMP_SIZE = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 };
+  const TYPE_COUNT = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
 
+  function readAccessorAsFloat(accIdx) {
+    if (accIdx === undefined) return null;
+    const acc = jsonChunk.accessors[accIdx];
+    if (!acc) return null;
+    const numComp = TYPE_COUNT[acc.type] || 1;
+    if (acc.bufferView === undefined) {
+      return new Float32Array(acc.count * numComp);
+    }
+    const bv = jsonChunk.bufferViews[acc.bufferView];
+    if (!bv) return new Float32Array(acc.count * numComp);
+    const compSize = COMP_SIZE[acc.componentType] || 4;
+    const stride = bv.byteStride || numComp * compSize;
+    const base = (bv.byteOffset || 0) + (acc.byteOffset || 0);
+    const dv = new DataView(binChunk);
+    const out = new Float32Array(acc.count * numComp);
+    const norm = Boolean(acc.normalized);
+
+    for (let i = 0; i < acc.count; i++) {
+      const row = base + i * stride;
+      for (let c = 0; c < numComp; c++) {
+        const p = row + c * compSize;
+        let v = 0;
+        if (acc.componentType === 5126) v = dv.getFloat32(p, true);
+        else if (acc.componentType === 5121) v = norm ? dv.getUint8(p) / 255 : dv.getUint8(p);
+        else if (acc.componentType === 5123) v = norm ? dv.getUint16(p, true) / 65535 : dv.getUint16(p, true);
+        else if (acc.componentType === 5125) v = dv.getUint32(p, true);
+        out[i * numComp + c] = v;
+      }
+    }
+    return out;
+  }
+
+  function readIndices(accIdx, vertCount) {
+    if (accIdx === undefined) {
+      const seq = new Uint32Array(vertCount);
+      for (let i = 0; i < vertCount; i++) seq[i] = i;
+      return seq;
+    }
+    const acc = jsonChunk.accessors[accIdx];
+    if (!acc || acc.bufferView === undefined || !jsonChunk.bufferViews[acc.bufferView]) {
+      const seq = new Uint32Array(vertCount);
+      for (let i = 0; i < vertCount; i++) seq[i] = i;
+      return seq;
+    }
+    const bv = jsonChunk.bufferViews[acc.bufferView];
+    const compSize = COMP_SIZE[acc.componentType] || 2;
+    const stride = bv.byteStride || compSize;
+    const base = (bv.byteOffset || 0) + (acc.byteOffset || 0);
+    const dv = new DataView(binChunk);
+    const out = new Uint32Array(acc.count);
+    for (let i = 0; i < acc.count; i++) {
+      const p = base + i * stride;
+      if (acc.componentType === 5123) out[i] = dv.getUint16(p, true);
+      else if (acc.componentType === 5125) out[i] = dv.getUint32(p, true);
+      else if (acc.componentType === 5121) out[i] = dv.getUint8(p);
+    }
+    return out;
+  }
+
+  const positions = [];
+  const normals = [];
+  const colors = [];
+  const metas = [];
+  const pivots = [];
+  const indices = [];
+
+  function decodeDracoPrimitive(dracoExt) {
+    const bv = jsonChunk.bufferViews[dracoExt.bufferView];
+    if (!bv) return null;
+    const compressed = new Int8Array(binChunk, bv.byteOffset || 0, bv.byteLength);
+    const decoder = new draco.Decoder();
+    const dracoBuf = new draco.DecoderBuffer();
+    const mesh = new draco.Mesh();
+    try {
+      dracoBuf.Init(compressed, compressed.length);
+      const geomType = decoder.GetEncodedGeometryType(dracoBuf);
+      if (geomType !== draco.TRIANGULAR_MESH) return null;
+      const status = decoder.DecodeBufferToMesh(dracoBuf, mesh);
+      if (!status.ok() || mesh.ptr === 0) return null;
+
+      const numPoints = mesh.num_points();
+      const numFaces = mesh.num_faces();
+      const idxArr = new Uint32Array(numFaces * 3);
+      const ia = new draco.DracoInt32Array();
+      try {
+        for (let f = 0; f < numFaces; f++) {
+          decoder.GetFaceFromMesh(mesh, f, ia);
+          idxArr[f * 3] = ia.GetValue(0);
+          idxArr[f * 3 + 1] = ia.GetValue(1);
+          idxArr[f * 3 + 2] = ia.GetValue(2);
+        }
+      } finally {
+        draco.destroy(ia);
+      }
+
+      const readDracoAttr = (attrName) => {
+        const uid = dracoExt.attributes?.[attrName];
+        if (uid === undefined) return null;
+        const attr = decoder.GetAttributeByUniqueId(mesh, uid);
+        if (!attr || attr.ptr === 0) return null;
+        const numComp = attr.num_components();
+        const arr = new draco.DracoFloat32Array();
+        try {
+          decoder.GetAttributeFloatForAllPoints(mesh, attr, arr);
+          const out = new Float32Array(numPoints * numComp);
+          for (let i = 0; i < out.length; i++) {
+            out[i] = arr.GetValue(i);
+          }
+          return out;
+        } finally {
+          draco.destroy(arr);
+        }
+      };
+
+      return {
+        posArr: readDracoAttr('POSITION'),
+        normArr: readDracoAttr('NORMAL'),
+        uvArr: readDracoAttr('TEXCOORD_0'),
+        colArr: readDracoAttr('COLOR_0'),
+        idxArr
+      };
+    } finally {
+      draco.destroy(mesh);
+      draco.destroy(dracoBuf);
+      draco.destroy(decoder);
+    }
+  }
+
+  function appendPrimitive(prim, worldMat) {
+    if (prim.mode !== undefined && prim.mode !== 4) return; // TRIANGLES only
+    const dracoExt = prim.extensions?.KHR_draco_mesh_compression;
+    let posArr, normArr, uvArr, colArr, idxArr;
+    if (dracoExt && draco) {
+      const decoded = decodeDracoPrimitive(dracoExt);
+      if (!decoded || !decoded.posArr || !decoded.posArr.length) return;
+      posArr = decoded.posArr;
+      normArr = decoded.normArr;
+      uvArr = decoded.uvArr;
+      colArr = decoded.colArr;
+      idxArr = decoded.idxArr;
+    } else {
+      posArr = readAccessorAsFloat(prim.attributes?.POSITION);
+      if (!posArr || !posArr.length) return;
+      normArr = readAccessorAsFloat(prim.attributes?.NORMAL);
+      uvArr = readAccessorAsFloat(prim.attributes?.TEXCOORD_0);
+      colArr = readAccessorAsFloat(prim.attributes?.COLOR_0);
+      idxArr = readIndices(prim.indices, posArr.length / 3);
+    }
+
+    const vertCount = posArr.length / 3;
+    const colStride = colArr ? colArr.length / vertCount : 0;
+
+    // Resolve material baseColorFactor + baseColorTexture
+    let baseFactor = [0.85, 0.88, 0.92];
+    let emissiveBoost = 0.08;
+    let texImg = null;
+    if (prim.material !== undefined && jsonChunk.materials?.[prim.material]) {
+      const mat = jsonChunk.materials[prim.material];
+      const pbr = mat.pbrMetallicRoughness || {};
+      if (Array.isArray(pbr.baseColorFactor)) {
+        baseFactor = [pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2]];
+      }
+      if (Array.isArray(mat.emissiveFactor)) {
+        const em = Math.max(mat.emissiveFactor[0], mat.emissiveFactor[1], mat.emissiveFactor[2]);
+        emissiveBoost = Math.max(emissiveBoost, Math.min(0.85, em));
+      }
+      if (pbr.baseColorTexture?.index !== undefined) {
+        const texDef = jsonChunk.textures?.[pbr.baseColorTexture.index];
+        if (texDef?.source !== undefined) {
+          texImg = decodedImages[texDef.source] || null;
+        }
+      }
+    }
+
+    // Transform positions by node world matrix and find primitive center for comic outline pivot
+    const baseVertex = positions.length / 3;
+    const m = worldMat;
+    let pMinX = Infinity, pMinY = Infinity, pMinZ = Infinity;
+    let pMaxX = -Infinity, pMaxY = -Infinity, pMaxZ = -Infinity;
+    const txPos = new Float32Array(posArr.length);
+
+    for (let i = 0; i < vertCount; i++) {
+      const x = posArr[i * 3], y = posArr[i * 3 + 1], z = posArr[i * 3 + 2];
+      const wx = m[0] * x + m[4] * y + m[8] * z + m[12];
+      const wy = m[1] * x + m[5] * y + m[9] * z + m[13];
+      const wz = m[2] * x + m[6] * y + m[10] * z + m[14];
+      txPos[i * 3] = wx;
+      txPos[i * 3 + 1] = wy;
+      txPos[i * 3 + 2] = wz;
+      if (wx < pMinX) pMinX = wx; if (wx > pMaxX) pMaxX = wx;
+      if (wy < pMinY) pMinY = wy; if (wy > pMaxY) pMaxY = wy;
+      if (wz < pMinZ) pMinZ = wz; if (wz > pMaxZ) pMaxZ = wz;
+    }
+
+    const pivX = (pMinX + pMaxX) * 0.5;
+    const pivY = (pMinY + pMaxY) * 0.5;
+    const pivZ = (pMinZ + pMaxZ) * 0.5;
+
+    // Compute fallback face normals if NORMAL is absent
+    if (!normArr) {
+      normArr = new Float32Array(posArr.length);
+      for (let i = 0; i < idxArr.length; i += 3) {
+        const a = idxArr[i] * 3, b = idxArr[i + 1] * 3, c = idxArr[i + 2] * 3;
+        const ax = posArr[b] - posArr[a], ay = posArr[b + 1] - posArr[a + 1], az = posArr[b + 2] - posArr[a + 2];
+        const bx = posArr[c] - posArr[a], by = posArr[c + 1] - posArr[a + 1], bz = posArr[c + 2] - posArr[a + 2];
+        const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+        normArr[a] += nx; normArr[a + 1] += ny; normArr[a + 2] += nz;
+        normArr[b] += nx; normArr[b + 1] += ny; normArr[b + 2] += nz;
+        normArr[c] += nx; normArr[c + 1] += ny; normArr[c + 2] += nz;
+      }
+    }
+
+    for (let i = 0; i < vertCount; i++) {
+      positions.push(txPos[i * 3], txPos[i * 3 + 1], txPos[i * 3 + 2]);
+
+      const nx0 = normArr[i * 3], ny0 = normArr[i * 3 + 1], nz0 = normArr[i * 3 + 2];
+      const wnx = m[0] * nx0 + m[4] * ny0 + m[8] * nz0;
+      const wny = m[1] * nx0 + m[5] * ny0 + m[9] * nz0;
+      const wnz = m[2] * nx0 + m[6] * ny0 + m[10] * nz0;
+      const nLen = Math.hypot(wnx, wny, wnz) || 1;
+      normals.push(wnx / nLen, wny / nLen, wnz / nLen);
+
+      let r = baseFactor[0], g = baseFactor[1], b = baseFactor[2];
+      if (texImg && uvArr) {
+        const u = ((uvArr[i * 2] % 1) + 1) % 1;
+        const v = ((uvArr[i * 2 + 1] % 1) + 1) % 1;
+        const px = Math.min(texImg.w - 1, Math.floor(u * texImg.w));
+        const py = Math.min(texImg.h - 1, Math.floor(v * texImg.h));
+        const off = (py * texImg.w + px) * 4;
+        r *= texImg.data[off] / 255;
+        g *= texImg.data[off + 1] / 255;
+        b *= texImg.data[off + 2] / 255;
+      }
+      if (colArr) {
+        r *= colArr[i * colStride];
+        g *= colArr[i * colStride + 1];
+        b *= colArr[i * colStride + 2];
+      }
+
+      const [cr, cg, cb] = comicBoostRgb(r, g, b);
+      colors.push(cr, cg, cb);
+      metas.push(0.008, emissiveBoost);
+      pivots.push(pivX, pivY, pivZ);
+    }
+
+    for (let i = 0; i < idxArr.length; i++) {
+      indices.push(baseVertex + idxArr[i]);
+    }
+  }
+
+  function walkNode(nodeIdx, parentMat) {
+    const node = jsonChunk.nodes?.[nodeIdx];
+    if (!node) return;
+    let localMat;
+    if (Array.isArray(node.matrix)) {
+      localMat = new Float32Array(node.matrix);
+    } else {
+      localMat = mat4FromTRS(
+        node.translation || [0, 0, 0],
+        node.rotation || [0, 0, 0, 1],
+        node.scale || [1, 1, 1]
+      );
+    }
+    const worldMat = mat4Multiply(parentMat, localMat);
+    if (node.mesh !== undefined && jsonChunk.meshes?.[node.mesh]) {
+      for (const prim of jsonChunk.meshes[node.mesh].primitives || []) {
+        appendPrimitive(prim, worldMat);
+      }
+    }
+    for (const childIdx of node.children || []) {
+      walkNode(childIdx, worldMat);
+    }
+  }
+
+  const sceneIdx = jsonChunk.scene || 0;
+  const rootNodes = jsonChunk.scenes?.[sceneIdx]?.nodes || [0];
+  const rootMat = mat4Identity();
+  for (const nIdx of rootNodes) {
+    walkNode(nIdx, rootMat);
+  }
+
+  // Normalize overall model scale & ground/center position
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
   for (let i = 0; i < positions.length; i += 3) {
@@ -558,41 +944,47 @@ async function parseGlbBuffer(arrayBuffer) {
     if (y < minY) minY = y; if (y > maxY) maxY = y;
     if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
   }
-  const cx = (minX + maxX) * 0.5;
-  const cy = minY;
-  const cz = (minZ + maxZ) * 0.5;
-  const diag = Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) || 1;
-  const scale = 0.85 / diag;
 
-  const colors = new Float32Array(positions.length);
-  const metas = new Float32Array((positions.length / 3) * 2);
-  const pivots = new Float32Array(positions.length);
+  const cx = (minX + maxX) * 0.5;
+  const cy = centerY ? (minY + maxY) * 0.5 : minY;
+  const cz = (minZ + maxZ) * 0.5;
+  const maxExtent = Math.max(maxX - minX, maxY - minY, maxZ - minZ) || 1;
+  const scale = targetSize / maxExtent;
 
   for (let i = 0; i < positions.length; i += 3) {
     positions[i] = (positions[i] - cx) * scale;
-    positions[i + 1] = (positions[i + 1] - cy) * scale + 0.05;
+    positions[i + 1] = (positions[i + 1] - cy) * scale + (centerY ? 0.0 : 0.04);
     positions[i + 2] = (positions[i + 2] - cz) * scale;
 
-    colors[i] = 0.98;
-    colors[i + 1] = 0.75;
-    colors[i + 2] = 0.14;
-
-    const vIdx = i / 3;
-    metas[vIdx * 2] = 0.012;
-    metas[vIdx * 2 + 1] = 0.15;
-
-    pivots[i] = 0;
-    pivots[i + 1] = 0.25;
-    pivots[i + 2] = 0;
+    pivots[i] = (pivots[i] - cx) * scale;
+    pivots[i + 1] = (pivots[i + 1] - cy) * scale + (centerY ? 0.0 : 0.04);
+    pivots[i + 2] = (pivots[i + 2] - cz) * scale;
   }
 
+  if (addBeaconAura) {
+    const auraRing = makeRingGeometry(0.46, 0.54, 40);
+    const baseV = positions.length / 3;
+    for (let i = 0; i < auraRing.positions.length; i += 3) {
+      const px = auraRing.positions[i], py = auraRing.positions[i + 1], pz = auraRing.positions[i + 2];
+      positions.push(px, py + 0.03, pz);
+      normals.push(0, 1, 0);
+      colors.push(0.996, 0.941, 0.541);
+      metas.push(0.0, -0.35);
+      pivots.push(0, 0.03, 0);
+    }
+    for (let i = 0; i < auraRing.indices.length; i++) {
+      indices.push(baseV + auraRing.indices[i]);
+    }
+  }
+
+  const useUint32 = positions.length / 3 > 65535;
   return {
-    positions,
-    normals,
-    colors,
-    metas,
-    pivots,
-    indices: indices instanceof Uint16Array ? indices : new Uint16Array(indices)
+    positions: new Float32Array(positions),
+    normals: new Float32Array(normals),
+    colors: new Float32Array(colors),
+    metas: new Float32Array(metas),
+    pivots: new Float32Array(pivots),
+    indices: useUint32 ? new Uint32Array(indices) : new Uint16Array(indices)
   };
 }
 
@@ -2229,14 +2621,64 @@ export class Horizon3DEngine {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geom.indices, gl.STATIC_DRAW);
 
     gl.bindVertexArray(null);
-    return { vao, count: geom.indices.length };
+    return {
+      vao,
+      count: geom.indices.length,
+      indexType: geom.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT
+    };
   }
 
   async init() {
-    // Keep the crisp comic 3D horizon active by default (matching (1).html)!
     this.onStatusChange('Comic 3D Horizon Active');
     this.renderFrame(performance.now());
+
+    // Load the active artifact's official NASA .glb first, then preload the rest
+    this._officialLoading = this._officialLoading || new Set();
+    this._officialLoaded = this._officialLoaded || new Set();
+    await this._loadOfficialModel(this.artifactId);
+    this._preloadOfficialModels();
     return true;
+  }
+
+  async _preloadOfficialModels() {
+    const priorityOrder = [
+      'apollo11', 'voyager1', 'opportunity', 'ingenuity',
+      'viking1', 'insight', 'pioneer10', 'huygens', 'newhorizons', 'voyager2'
+    ];
+    for (const id of priorityOrder) {
+      await this._loadOfficialModel(id);
+    }
+  }
+
+  async _loadOfficialModel(id) {
+    const spec = OFFICIAL_NASA_GLBS[id];
+    if (!spec || !this.gl) return false;
+    this._officialLoading = this._officialLoading || new Set();
+    this._officialLoaded = this._officialLoaded || new Set();
+    if (this._officialLoaded.has(id) || this._officialLoading.has(id)) return false;
+
+    this._officialLoading.add(id);
+    try {
+      const resp = await fetch(spec.url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const buf = await resp.arrayBuffer();
+      const parsed = await parseGlbBuffer(buf, {
+        targetSize: spec.size,
+        addBeaconAura: spec.aura,
+        centerY: spec.centerY
+      });
+      this.monumentMeshes[id] = this._uploadMonumentGeometry(parsed);
+      this._officialLoaded.add(id);
+      if (this.artifactId === id) {
+        this.renderFrame(performance.now());
+      }
+      return true;
+    } catch (err) {
+      console.warn(`Official NASA GLB fallback to comic mesh for ${id}:`, err);
+      return false;
+    } finally {
+      this._officialLoading.delete(id);
+    }
   }
 
   async loadCustomGlbFile(file) {
@@ -2287,6 +2729,9 @@ export class Horizon3DEngine {
   setArtifact({ id, artifactType, horizonAngle }) {
     if (id) {
       this.artifactId = id;
+      if (OFFICIAL_NASA_GLBS[id]) {
+        this._loadOfficialModel(id);
+      }
     }
     if (artifactType) {
       this.artifactType = artifactType;
@@ -2551,12 +2996,12 @@ export class Horizon3DEngine {
       gl.enable(gl.CULL_FACE);
       gl.cullFace(gl.FRONT);
       gl.uniform1f(this.monumentLocs.uOutlinePass, 1.0);
-      gl.drawElements(gl.TRIANGLES, monMesh.count, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, monMesh.count, monMesh.indexType || gl.UNSIGNED_SHORT, 0);
 
       // Pass 2b: Comic cel-shaded fill pass
       gl.disable(gl.CULL_FACE);
       gl.uniform1f(this.monumentLocs.uOutlinePass, 0.0);
-      gl.drawElements(gl.TRIANGLES, monMesh.count, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, monMesh.count, monMesh.indexType || gl.UNSIGNED_SHORT, 0);
 
       // Project monument 3D center to container CSS pixels for click/hover detection
       const vp = mat4Multiply(proj, view);
