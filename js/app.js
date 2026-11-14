@@ -363,10 +363,14 @@ function renderMapPins() {
     g.setAttribute('tabindex', '0');
     g.setAttribute('role', 'button');
     g.setAttribute('aria-label', `${item.title} (${item.coords})`);
-    g.addEventListener('click', () => selectMission(idx));
+    g.addEventListener('click', () => {
+      window.dismissCoachmark?.('tutorial-map-coachmark');
+      selectMission(idx);
+    });
     g.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        window.dismissCoachmark?.('tutorial-map-coachmark');
         selectMission(idx);
       }
     });
@@ -520,8 +524,8 @@ function renderStoryContent() {
               alt="${activePhoto.title}"
               class="photo-carousel-img"
             />
-            <span class="hero-photo-badge">${activePhoto.badge || '📸 Real NASA Photo'}</span>
-            <span class="hero-photo-zoom-pill">🔍 Zoom</span>
+            <span class="hero-photo-badge">${activePhoto.badge || 'NASA Archive Photo'}</span>
+            <span class="hero-photo-zoom-pill">Zoom</span>
             <div class="hero-photo-caption-bar">
               <span class="hero-photo-title">${activePhoto.title}</span>
               <span class="hero-photo-credit">${activePhoto.credit || 'NASA'}</span>
@@ -563,7 +567,7 @@ function renderStoryContent() {
                     )
                     .join('')}
                 </div>
-                <span class="photo-carousel-counter">📸 Photo ${selectedGalleryIdx + 1} / ${gallery.length}</span>
+                <span class="photo-carousel-counter">Photo ${selectedGalleryIdx + 1} / ${gallery.length}</span>
               </div>
             `
             : ''
@@ -595,8 +599,8 @@ function renderStoryContent() {
         ${funFactHtml}
         <div class="kid-short-summary-box">
           <div class="kid-short-summary-header">
-            <span class="kid-summary-pill">⚡ Quick Summary</span>
-            <span class="kid-summary-coords">📍 ${item.region}</span>
+            <span class="kid-summary-pill">Quick Summary</span>
+            <span class="kid-summary-coords">${item.region}</span>
           </div>
           <p class="kid-short-summary-text">${enrichWithNasaLinks(shortSummaryText, 2)}</p>
           <button
@@ -605,7 +609,7 @@ function renderStoryContent() {
             class="read-more-toggle-btn"
             aria-expanded="${isStoryExpanded ? 'true' : 'false'}"
           >
-            <span>${isStoryExpanded ? '🔼 Show Short Summary (Collapse)' : '📖 Read Full Story (+ Expand)'}</span>
+            <span>${isStoryExpanded ? 'Show Summary' : 'Read Full Story'}</span>
           </button>
         </div>
         ${
@@ -613,7 +617,7 @@ function renderStoryContent() {
             ? `
               <div class="story-full-expanded-box">
                 <div class="story-location-banner">
-                  📍 Exact Coordinates: ${item.region} • ${item.coords}
+                  Coordinates: ${item.region} · ${item.coords}
                 </div>
                 ${item.story
                   .map(
@@ -1091,19 +1095,60 @@ function initLayoutCustomizerAndTutorials() {
     });
   }
 
+  const dismissCoachmark = (targetId) => {
+    if (!targetId) return;
+    document.getElementById(targetId)?.classList.add('is-hidden');
+    try {
+      localStorage.setItem(`cr_coachmark_${targetId}`, '1');
+    } catch (_) {}
+  };
+  window.dismissCoachmark = dismissCoachmark;
+
+  // Restore previously completed/dismissed coachmarks
+  ['tutorial-3d-coachmark', 'tutorial-map-coachmark'].forEach((id) => {
+    try {
+      if (localStorage.getItem(`cr_coachmark_${id}`) === '1') {
+        document.getElementById(id)?.classList.add('is-hidden');
+      }
+    } catch (_) {}
+  });
+
   // Visual Tutorial Coachmark Dismiss Buttons
   document.querySelectorAll('[data-dismiss-coachmark]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const targetId = btn.getAttribute('data-dismiss-coachmark');
-      document.getElementById(targetId)?.classList.add('is-hidden');
+      dismissCoachmark(btn.getAttribute('data-dismiss-coachmark'));
     });
   });
 
+  // Auto-dismiss 3D coachmark when user orbits or zooms the 3D stage
+  const stageContainer = document.getElementById('moon-3d-container');
+  if (stageContainer) {
+    let stagePointerStart = null;
+    stageContainer.addEventListener('pointerdown', (e) => {
+      stagePointerStart = { x: e.clientX, y: e.clientY };
+    });
+    stageContainer.addEventListener('pointermove', (e) => {
+      if (!stagePointerStart) return;
+      if (Math.hypot(e.clientX - stagePointerStart.x, e.clientY - stagePointerStart.y) > 8) {
+        stagePointerStart = null;
+        dismissCoachmark('tutorial-3d-coachmark');
+      }
+    });
+    window.addEventListener('pointerup', () => {
+      stagePointerStart = null;
+    });
+    stageContainer.addEventListener('wheel', () => dismissCoachmark('tutorial-3d-coachmark'), { passive: true });
+  }
+
   // Visual Interactive Guide Modal
   const openTutorialModal = () => {
-    document.getElementById('tutorial-3d-coachmark')?.classList.remove('is-hidden');
-    document.getElementById('tutorial-map-coachmark')?.classList.remove('is-hidden');
+    ['tutorial-3d-coachmark', 'tutorial-map-coachmark'].forEach((id) => {
+      document.getElementById(id)?.classList.remove('is-hidden');
+      try {
+        localStorage.removeItem(`cr_coachmark_${id}`);
+      } catch (_) {}
+    });
     if (!tutorialModal) return;
     if (typeof tutorialModal.showModal === 'function') {
       if (!tutorialModal.open) tutorialModal.showModal();
@@ -1319,6 +1364,9 @@ function initApp() {
       openModelInspector();
     },
     onGlobeModeChange: (isFullGlobe) => {
+      if (isFullGlobe && typeof window.dismissCoachmark === 'function') {
+        window.dismissCoachmark('tutorial-3d-coachmark');
+      }
       const btn = document.getElementById('toggle-full-globe-btn');
       const label = document.getElementById('full-globe-btn-label');
       if (btn) {
@@ -1326,8 +1374,8 @@ function initApp() {
       }
       if (label) {
         label.textContent = isFullGlobe
-          ? '🌕 Lower Moon Down ↓'
-          : '🌕 Full Globe (Hover Bottom)';
+          ? 'Lower Globe ↓'
+          : 'Full Globe';
       }
     },
   });
@@ -1355,8 +1403,14 @@ function initApp() {
   });
 
   // Arrow Navigation Controls (under Map + on Story Header + Keyboard)
-  document.getElementById('map-prev-btn')?.addEventListener('click', () => selectMission(currentIndex - 1));
-  document.getElementById('map-next-btn')?.addEventListener('click', () => selectMission(currentIndex + 1));
+  document.getElementById('map-prev-btn')?.addEventListener('click', () => {
+    if (typeof window.dismissCoachmark === 'function') window.dismissCoachmark('tutorial-map-coachmark');
+    selectMission(currentIndex - 1);
+  });
+  document.getElementById('map-next-btn')?.addEventListener('click', () => {
+    if (typeof window.dismissCoachmark === 'function') window.dismissCoachmark('tutorial-map-coachmark');
+    selectMission(currentIndex + 1);
+  });
   document.getElementById('story-prev-btn')?.addEventListener('click', () => selectMission(currentIndex - 1));
   document.getElementById('story-next-btn')?.addEventListener('click', () => selectMission(currentIndex + 1));
 
