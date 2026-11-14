@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Silent Monuments of Space | NASA Hardware on the Moon, Mars &amp; Deep Space</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a href="#mission-title" class="skip-link visually-hidden">Skip directly to mission story</a>
+
+  <!-- 1. BACKGROUND LAYER: Twinkling Deep Space Starfield with 4-Point Cross Stars -->
+  <canvas id="starfield-canvas" class="starfield-canvas" aria-hidden="true"></canvas>
+
+  <!-- Subtle Cosmic Nebula Glows -->
+  <div class="nebula-glows" aria-hidden="true">
+    <div class="nebula-blob nebula-indigo"></div>
+    <div class="nebula-blob nebula-sky"></div>
+  </div>
+
+  <!-- 2. BOTTOM FOREGROUND LAYER: Interactive 3D Horizon & Glowing 3D Hardware Monument -->
+  <div
+    id="moon-3d-container"
+    class="horizon-3d-container"
+    data-window-id="stage3d"
+    tabindex="0"
+    role="region"
+    aria-label="Interactive 3D Planetary and Deep Space Horizon — Drag to rotate, click the glowing 3D artifact to inspect"
+    title="Drag to rotate the 3D horizon • Scroll to zoom • Click the glowing 3D monument to inspect"
+  >
+    <!-- Window Drag Bar (visible when Customize Layout mode is active) -->
+    <div class="window-drag-bar window-drag-bar-3d" data-drag-handle="stage3d">
+      <span class="drag-grip-dots" aria-hidden="true">⋮⋮</span>
+      <span>3D Viewport Stage (Drag to move • Pull corner to resize)</span>
+    </div>
+
+    <canvas id="horizon-3d-canvas" aria-hidden="true"></canvas>
+
+    <div class="window-resize-handle" data-resize-handle="stage3d" title="Drag corner to resize 3D stage"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-box" class="toast-box" role="status" aria-live="polite">
+    <div class="toast-inner hud-panel">
+      <span class="toast-dot" aria-hidden="true"></span>
+      <span id="toast-message">Status ready</span>
+    </div>
+  </div>
+
+  <!-- MAIN RESPONSIVE HUD OVERLAY (Matching Sketch & Reference Layout) -->
+  <main class="hud-overlay">
+
+    <!-- 3. LEFT SIDE: Story & Narrative Panel (Moon / Mars / Universe) -->
+    <section
+      id="story-hud-panel"
+      data-window-id="story"
+      aria-label="Mission Story, Engineering and Science"
+      class="story-hud-panel hud-panel hud-scanline"
+    >
+      <!-- Window Drag Bar (visible when Customize Layout mode is active) -->
+      <div class="window-drag-bar" data-drag-handle="story">
+        <span class="drag-grip-dots" aria-hidden="true">⋮⋮</span>
+        <span>Story Panel (Drag anywhere • Pull bottom-right corner to resize)</span>
+      </div>
+
+      <!-- Realm Switcher: Moon / Mars / Universe -->
+      <div class="realm-switcher-bar" role="tablist" aria-label="Select Space Realm">
+        <button type="button" data-realm="moon" role="tab" aria-selected="true" class="realm-btn is-active">
+          <span aria-hidden="true">🌙</span>
+          <span>Moon</span>
+          <span class="realm-count" id="count-moon">6</span>
+        </button>
+        <button type="button" data-realm="mars" role="tab" aria-selected="false" class="realm-btn">
+          <span aria-hidden="true">🔴</span>
+          <span>Mars</span>
+          <span class="realm-count" id="count-mars">5</span>
+        </button>
+        <button type="button" data-realm="universe" role="tab" aria-selected="false" class="realm-btn">
+          <span aria-hidden="true">🌌</span>
+          <span>Universe</span>
+          <span class="realm-count" id="count-universe">5</span>
+        </button>
+      </div>
+
+      <!-- Top Header Bar -->
+      <div class="story-header-bar">
+        <div class="story-title-group">
+          <div class="story-badge-row">
+            <span id="realm-archive-badge" class="archive-badge">
+              NASA ARCHIVE // SILENT MONUMENTS OF THE MOON
+            </span>
+            <span id="mission-year-badge" class="year-badge">1969</span>
+          </div>
+          <h1 id="mission-title" class="mission-title">
+            Apollo 11: "Eagle" Descent Stage &amp; Laser Reflector
+          </h1>
+        </div>
+
+        <!-- Left-side Quick Chapter Flip Arrows -->
+        <div class="story-quick-arrows">
+          <button type="button" id="story-prev-btn" aria-label="Previous Artifact" class="icon-arrow-btn" title="Previous Artifact (←)">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button type="button" id="story-next-btn" aria-label="Next Artifact" class="icon-arrow-btn" title="Next Artifact (→)">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs: The Story / Engineering / Science -->
+      <div class="story-tabs-grid" role="tablist" aria-label="Artifact Information Tabs">
+        <button type="button" data-tab="story" role="tab" aria-selected="true" class="tab-btn is-active">
+          <span aria-hidden="true">📖</span><span>The Story</span>
+        </button>
+        <button type="button" data-tab="tech" role="tab" aria-selected="false" class="tab-btn">
+          <span aria-hidden="true">🛰️</span><span>Engineering</span>
+        </button>
+        <button type="button" data-tab="science" role="tab" aria-selected="false" class="tab-btn">
+          <span aria-hidden="true">🔬</span><span>Science</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Content Body -->
+      <div id="story-content-area" class="story-content-area custom-scroll" aria-live="polite">
+        <!-- Dynamically populated via JS -->
+      </div>
+
+      <!-- Bottom Status & NASA Sources Trigger -->
+      <div class="story-footer-bar">
+        <div class="status-group">
+          <span id="status-dot" class="status-dot is-emerald" aria-hidden="true"></span>
+          <span id="mission-status-text" class="status-text">Status: Laser Retroreflector still active today!</span>
+        </div>
+        <button type="button" id="open-sources-btn" class="sources-link-btn">
+          NASA Sources (<span id="sources-count-badge">18</span>)
+        </button>
+      </div>
+
+      <div class="window-resize-handle" data-resize-handle="story" title="Drag corner to resize Story panel"></div>
+    </section>
+
+    <!-- 4. TOP-RIGHT: Interactive Radar Map ("Map") + Navigation Arrows Directly Below ("Pfeile") -->
+    <aside
+      id="map-hud-aside"
+      data-window-id="map"
+      aria-label="Interactive Space Radar Map and Mission Navigation"
+      class="map-hud-aside"
+    >
+      <!-- Window Drag Bar (visible when Customize Layout mode is active) -->
+      <div class="window-drag-bar" data-drag-handle="map">
+        <span class="drag-grip-dots" aria-hidden="true">⋮⋮</span>
+        <span>Radar Map &amp; Arrows (Drag anywhere • Pull corner to resize)</span>
+      </div>
+
+      <!-- Map Card (Top Right Box) -->
+      <div class="map-hud-card hud-panel">
+        <div class="map-card-header">
+          <div class="map-card-title-wrap">
+            <span class="ping-dot" aria-hidden="true"></span>
+            <h2 id="map-card-title" class="map-card-title">
+              Lunar Artifact Map
+            </h2>
+          </div>
+          <span id="map-coords" class="map-coords-badge">
+            0.6741° N, 23.4730° E
+          </span>
+        </div>
+
+        <!-- Interactive SVG Radar Map (Switches dynamically between Moon, Mars & Deep Space Universe) -->
+        <div class="radar-map-box">
+          <svg id="lunar-map-svg" viewBox="0 0 320 220" class="radar-map-svg" role="img" aria-label="Interactive artifact radar map">
+            <defs>
+              <radialGradient id="moonDiscGrad" cx="42%" cy="38%" r="58%">
+                <stop offset="0%" stop-color="#334155" />
+                <stop offset="55%" stop-color="#1E293B" />
+                <stop offset="92%" stop-color="#0F172A" />
+                <stop offset="100%" stop-color="#020617" />
+              </radialGradient>
+              <radialGradient id="marsDiscGrad" cx="40%" cy="36%" r="58%">
+                <stop offset="0%" stop-color="#7c2d12" />
+                <stop offset="55%" stop-color="#431407" />
+                <stop offset="92%" stop-color="#1c0a05" />
+                <stop offset="100%" stop-color="#090402" />
+              </radialGradient>
+              <radialGradient id="universeDiscGrad" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#1e1b4b" />
+                <stop offset="50%" stop-color="#0f172a" />
+                <stop offset="90%" stop-color="#020617" />
+                <stop offset="100%" stop-color="#01030a" />
+              </radialGradient>
+              <filter id="glowAmber" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            <!-- Dynamic Realm Backdrop (Moon Maria / Mars Topography / Solar System & Interstellar Orbits) -->
+            <g id="map-backdrop-layer"></g>
+
+            <!-- Dynamic Mission Pins Group -->
+            <g id="map-pins-layer"></g>
+          </svg>
+
+          <!-- Selected Site Mini Label Overlay -->
+          <div class="radar-map-footer">
+            <span id="map-region-name" class="region-pill">
+              Mare Tranquillitatis
+            </span>
+            <span id="mission-counter" class="counter-pill">
+              1 / 6
+            </span>
+          </div>
+        </div>
+
+        <!-- Visual Interactive Radar Map Coachmark -->
+        <div id="tutorial-map-coachmark" class="tutorial-coachmark tutorial-map-coachmark">
+          <span class="map-coach-pointer" aria-hidden="true">👆</span>
+          <span class="tutorial-coachmark-text">
+            <strong>Radar Map:</strong> Click any glowing pin or use <strong>« Previous / Next »</strong> below to fly to that mission!
+          </span>
+          <button type="button" class="tutorial-dismiss-chip" data-dismiss-coachmark="tutorial-map-coachmark" aria-label="Hide Map Hint">✕</button>
+        </div>
+      </div>
+
+      <!-- Navigation Arrows Directly Under the Map ("Pfeile") -->
+      <div class="pfeile-hud-card hud-panel">
+        <button type="button" id="map-prev-btn" class="nav-arrow-btn nav-arrow-prev">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+          </svg>
+          <span>Previous</span>
+        </button>
+
+        <div class="mission-dots" id="mission-dots" role="group" aria-label="Select Artifact in Current Realm">
+          <!-- Indicator dots -->
+        </div>
+
+        <button type="button" id="map-next-btn" class="nav-arrow-btn nav-arrow-next">
+          <span>Next</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Compact Cockpit Controls Dock Under Arrows (Layout Customizer, Full Globe Toggle & Visual Guide) -->
+      <div class="cockpit-dock-card hud-panel">
+        <div class="cockpit-dock-top">
+          <span class="pill-status">
+            <span class="pulse-dot" id="horizon-pill-dot" aria-hidden="true"></span>
+            <span id="horizon-realm-label">COMIC 3D LUNAR HORIZON</span>
+          </span>
+          <button type="button" id="toggle-full-globe-btn" class="pill-action-btn" aria-pressed="false" title="Move mouse to bottom edge or click here to center the full 3D Moon/Mars globe — or lower it back down to the horizon">
+            <span aria-hidden="true">🌕</span>
+            <span id="full-globe-btn-label">Full Globe (Hover Bottom)</span>
+          </button>
+        </div>
+
+        <!-- Visual 3D Drag & Full Globe Coachmark (Inside Right Dock — Never blocks bottom-center!) -->
+        <div id="tutorial-3d-coachmark" class="tutorial-coachmark tutorial-dock-coachmark">
+          <div class="tutorial-3d-gizmo" aria-hidden="true">
+            <svg viewBox="0 0 110 76" class="gizmo-svg">
+              <defs>
+                <marker id="arrowCyan" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+                </marker>
+                <marker id="arrowAmber" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
+                </marker>
+              </defs>
+              <ellipse cx="55" cy="42" rx="40" ry="15" fill="none" stroke="rgba(56,189,248,0.45)" stroke-width="1.6" stroke-dasharray="4 3" />
+              <path d="M 14 42 Q 55 62 96 42" fill="none" stroke="#38bdf8" stroke-width="2.2" marker-start="url(#arrowCyan)" marker-end="url(#arrowCyan)" />
+              <line x1="55" y1="68" x2="55" y2="10" stroke="#fbbf24" stroke-width="2" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" />
+              <text x="61" y="16" fill="#fef08a" font-size="8" font-family="JetBrains Mono, monospace">3D AXIS</text>
+            </svg>
+            <div class="Animated-hand-icon" title="Drag left/right &amp; scroll to zoom">🖐️</div>
+          </div>
+          <div class="tutorial-coachmark-text">
+            <strong>3D &amp; Full Moon:</strong> Drag <strong>🖐️ ↔</strong> to rotate • Move mouse to <strong>bottom edge ↓</strong> to raise the <strong>full Moon to center</strong> (move up to lower it again)!
+          </div>
+          <button type="button" class="tutorial-dismiss-chip" data-dismiss-coachmark="tutorial-3d-coachmark" aria-label="Hide 3D Hint">✕</button>
+        </div>
+
+        <div class="cockpit-dock-actions">
+          <button type="button" id="toggle-layout-edit-btn" class="pill-action-btn" aria-pressed="false" title="Move and resize Story, Map, and 3D Viewport freely anywhere on screen">
+            <span aria-hidden="true">✥</span>
+            <span id="layout-edit-btn-label">Customize Layout</span>
+          </button>
+          <button type="button" id="reset-layout-btn" class="pill-action-btn pill-reset-btn" title="Restore all panels and 3D view to default">
+            <span aria-hidden="true">↺</span>
+            <span>Reset Default</span>
+          </button>
+          <button type="button" id="open-tutorial-btn" class="pill-action-btn pill-help-btn" title="Show interactive visual tutorials for 3D dragging, map radar, and layout">
+            <span aria-hidden="true">💡</span>
+            <span>Visual Guide</span>
+          </button>
+          <label for="nasa-glb-upload" class="glb-upload-label" title="Load an official NASA .glb 3D model (e.g. from NASA SVS 14959)">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span id="glb-status-label">.GLB</span>
+          </label>
+          <input type="file" id="nasa-glb-upload" accept=".glb,.gltf" hidden />
+        </div>
+      </div>
+
+      <div class="window-resize-handle" data-resize-handle="map" title="Drag corner to resize Radar Map"></div>
+    </aside>
+  </main>
+
+  <!-- 4A. FULLSCREEN NASA PHOTO LIGHTBOX MODAL -->
+  <dialog id="photo-lightbox-modal" class="sources-modal photo-lightbox-modal" closedby="any" aria-labelledby="lightbox-photo-title">
+    <div class="sources-modal-card photo-lightbox-card hud-panel">
+      <div class="sources-modal-header">
+        <div>
+          <span id="lightbox-photo-badge" class="modal-kicker">📸 Official NASA Mission Photograph</span>
+          <h2 id="lightbox-photo-title" class="modal-title">Mission Photograph</h2>
+        </div>
+        <button type="button" id="close-lightbox-btn" class="icon-close-btn" aria-label="Close Enlarged Photo">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="photo-lightbox-body">
+        <img id="lightbox-photo-img" src="" alt="" class="photo-lightbox-img" />
+        <p id="lightbox-photo-credit" class="photo-lightbox-credit"></p>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 4B. INTERACTIVE VISUAL GUIDE & TUTORIAL MODAL (3D Axes + Hand Dragging + Map Radar + Custom Layout) -->
+  <dialog id="tutorial-modal" class="sources-modal tutorial-modal" closedby="any" aria-labelledby="tutorial-modal-title">
+    <div class="sources-modal-card tutorial-modal-card hud-panel">
+      <div class="sources-modal-header">
+        <div>
+          <span class="modal-kicker">Interactive Controls &amp; Custom Layout Guide</span>
+          <h2 id="tutorial-modal-title" class="modal-title">How to Explore &amp; Customize Your Cockpit</h2>
+        </div>
+        <button type="button" id="close-tutorial-btn" class="icon-close-btn" aria-label="Close Visual Guide">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sources-modal-body custom-scroll">
+        <div class="tutorial-cards-grid">
+
+          <!-- Card 1: 3D Dragging, 3D Axis Arrows & Hand Gesture -->
+          <div class="tutorial-guide-card">
+            <div class="tutorial-visual-stage">
+              <svg viewBox="0 0 180 100" class="tutorial-stage-svg" aria-hidden="true">
+                <ellipse cx="90" cy="60" rx="64" ry="22" fill="none" stroke="rgba(56,189,248,0.35)" stroke-width="1.8" stroke-dasharray="5 4" />
+                <path d="M 24 60 Q 90 90 156 60" fill="none" stroke="#38bdf8" stroke-width="2.6" />
+                <polygon points="24,60 34,55 32,66" fill="#38bdf8" />
+                <polygon points="156,60 146,55 148,66" fill="#38bdf8" />
+                <line x1="90" y1="88" x2="90" y2="14" stroke="#fbbf24" stroke-width="2.4" />
+                <polygon points="90,12 85,22 95,22" fill="#fbbf24" />
+                <polygon points="90,90 85,80 95,80" fill="#fbbf24" />
+                <circle cx="90" cy="52" r="14" fill="rgba(251,191,36,0.22)" stroke="#fbbf24" stroke-width="1.8" />
+              </svg>
+              <div class="tutorial-stage-hand" aria-hidden="true">🖐️</div>
+            </div>
+            <h3 class="tutorial-card-title">1. 3D Rotation, Free-Flight &amp; Zoom</h3>
+            <p class="tutorial-card-desc">
+              Grab and drag <strong>🖐️ left / right / up / down</strong> on the 3D scene to rotate the Moon or Mars horizon—or steer the free-flying spacecraft in <strong>Universe</strong> mode! Use your <strong>mouse wheel ↕</strong> to zoom in close, and click any 3D model to inspect it.
+            </p>
+          </div>
+
+          <!-- Card 2: Interactive Radar Map & Mission Arrows -->
+          <div class="tutorial-guide-card">
+            <div class="tutorial-visual-stage">
+              <svg viewBox="0 0 180 100" class="tutorial-stage-svg" aria-hidden="true">
+                <circle cx="90" cy="48" r="36" fill="rgba(15,23,42,0.85)" stroke="rgba(56,189,248,0.45)" stroke-width="1.5" />
+                <circle cx="90" cy="48" r="22" fill="none" stroke="rgba(56,189,248,0.2)" stroke-dasharray="3 3" />
+                <circle cx="72" cy="40" r="4" fill="#38bdf8" />
+                <circle cx="108" cy="56" r="4" fill="#38bdf8" />
+                <circle cx="94" cy="36" r="11" fill="none" stroke="#fbbf24" stroke-width="1.5" opacity="0.6" />
+                <circle cx="94" cy="36" r="5.5" fill="#fbbf24" />
+                <text x="104" y="39" fill="#fef08a" font-size="8" font-family="JetBrains Mono, monospace">PIN</text>
+              </svg>
+              <div class="tutorial-stage-pointer" aria-hidden="true">👆</div>
+            </div>
+            <h3 class="tutorial-card-title">2. Radar Map &amp; Quick Arrows</h3>
+            <p class="tutorial-card-desc">
+              Click any glowing <strong>beacon pin 👆</strong> on the top-right radar map to jump directly to that landing site or deep-space trajectory. You can also use the <strong>« Previous / Next »</strong> buttons or your keyboard’s <strong>← / →</strong> arrow keys.
+            </p>
+          </div>
+
+          <!-- Card 3: Free Layout Customization & Reset to Default -->
+          <div class="tutorial-guide-card">
+            <div class="tutorial-visual-stage">
+              <svg viewBox="0 0 180 100" class="tutorial-stage-svg" aria-hidden="true">
+                <rect x="28" y="18" width="96" height="62" rx="8" fill="rgba(15,23,42,0.85)" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="4 3" />
+                <rect x="28" y="18" width="96" height="14" rx="4" fill="rgba(56,189,248,0.25)" />
+                <text x="36" y="28" fill="#bae6fd" font-size="7.5" font-family="JetBrains Mono, monospace">⋮⋮ DRAG WINDOW</text>
+                <!-- Resize arrows at bottom-right corner -->
+                <path d="M 114 70 L 146 92" stroke="#fbbf24" stroke-width="2.2" />
+                <polygon points="148,93 138,91 144,84" fill="#fbbf24" />
+                <rect x="116" y="72" width="12" height="12" rx="2" fill="#fbbf24" />
+              </svg>
+            </div>
+            <h3 class="tutorial-card-title">3. Move, Resize &amp; Reset Layout</h3>
+            <p class="tutorial-card-desc">
+              Click <strong>✥ Customize Layout</strong> in the bottom bar to unlock all panels! Drag any window by its top <strong>⋮⋮ handle bar</strong> to place it wherever you want, pull the <strong>bottom-right corner ↘</strong> to make it as large or small as you like, and click <strong>↺ Reset Default</strong> anytime to restore the standard view.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="sources-modal-footer tutorial-modal-footer">
+        <button type="button" id="tutorial-enable-customize-btn" class="pill-action-btn">
+          ✥ Try Customize Layout Now
+        </button>
+        <button type="button" id="close-tutorial-btn-bottom" class="modal-return-btn">
+          Got It — Back to Space!
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 5. OFFICIAL NASA RESOURCES MODAL (Strict Attribution Requirement) -->
+  <dialog id="sources-modal" class="sources-modal" closedby="any" aria-labelledby="sources-modal-title">
+    <div class="sources-modal-card hud-panel">
+      <div class="sources-modal-header">
+        <div>
+          <span class="modal-kicker">Official Data, Imagery &amp; 3D Model Attribution</span>
+          <h2 id="sources-modal-title" class="modal-title">NASA Resources Used (100% Official NASA)</h2>
+        </div>
+        <button type="button" id="close-sources-btn" class="icon-close-btn" aria-label="Close NASA Resources Modal">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sources-modal-body custom-scroll">
+        <p class="sources-modal-intro">
+          Every historical mission narrative, coordinate, scientific finding, surface mosaic, photograph, and 3D topographic model in this application originates exclusively from official NASA archives (Moon, Mars, and Deep Space):
+        </p>
+        <div id="sources-modal-list" class="sources-modal-list"></div>
+      </div>
+
+      <div class="sources-modal-footer">
+        <button type="button" id="close-sources-btn-bottom" class="modal-return-btn">
+          Return to Space Exploration
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

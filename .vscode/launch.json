@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Local Server & Open Browser",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "python serve.py --port 8000",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
