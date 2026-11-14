@@ -2976,14 +2976,13 @@ export class Horizon3DEngine {
       const py = e.clientY - rect.top;
 
       // Automatic Hover-at-Bottom Full-Globe Centering & Lowering
-      // When the mouse moves down to the bottom Moon/Mars (y >= 72% of viewport), raise & center the full Moon!
-      // When the mouse moves back up (y <= 46% of viewport), smoothly lower the Moon back down to the bottom horizon!
+      // Only raise & zoom out into Full Globe when mouse is down near the bottom edge (y >= 85% of viewport)!
       if (this.realm !== 'universe' && !this.isDragging) {
         const overHudCard = e.target && typeof e.target.closest === 'function' && e.target.closest('.hud-panel');
         if (!this.manualGlobeLock) {
-          if (e.clientY >= window.innerHeight * 0.72 && !overHudCard) {
+          if (e.clientY >= window.innerHeight * 0.85 && !overHudCard) {
             this.setFullGlobeMode(true, false);
-          } else if (e.clientY <= window.innerHeight * 0.46) {
+          } else if (e.clientY <= window.innerHeight * 0.52) {
             this.setFullGlobeMode(false, false);
           }
         }
@@ -3099,19 +3098,21 @@ export class Horizon3DEngine {
     const aspect = (this.canvas.width || 1) / (this.canvas.height || 1);
     const g = this.realm === 'universe' ? 0.0 : this.currentGlobeProgress;
 
+    const isMobile = window.innerWidth < 768;
+
     // Interpolate camera between Bottom Horizon (g=0) and Centered Full Globe (g=1)
     const proj = mat4Perspective((40 * Math.PI) / 180, aspect, 0.1, 100.0);
-    const camX = 0.28 * (1.0 - g);
-    const camY = 1.25 * (1.0 - g);
+    const camX = isMobile ? 0.0 : 0.28 * (1.0 - g);
+    const camY = (isMobile ? 0.45 : 1.25) * (1.0 - g);
     const camPos = [camX, camY, this.currentZoomZ];
-    const lookX = 0.28 * (1.0 - g);
-    const lookY = -0.35 * (1.0 - g);
+    const lookX = isMobile ? 0.0 : 0.28 * (1.0 - g);
+    const lookY = (isMobile ? 0.05 : -0.35) * (1.0 - g);
     const view = mat4LookAt(camPos, [lookX, lookY, 0.0], [0, 1, 0]);
 
     // Interpolate Planet center & scale so at g=0 it forms a clean, less-zoomed bottom horizon,
     // and at g=1 the entire 3D Moon/Mars globe sits compact & completely visible in the center of the screen!
-    const planetScale = 0.56 * (1.0 - g) + 0.21 * g; // 0.56 (horizon) -> 0.21 (centered full globe, radius ~1.09)
-    const planetCenterY = -3.72 * (1.0 - g) - 0.05 * g;
+    const planetScale = (isMobile ? 0.36 : 0.56) * (1.0 - g) + (isMobile ? 0.17 : 0.21) * g;
+    const planetCenterY = (isMobile ? -1.95 : -3.72) * (1.0 - g) - 0.05 * g;
 
     // Monument local coordinates sitting on top of the planet ridge [0.85, 5.14, 0.55]
     const planetModel = mat4FromTranslationRotationScale(
