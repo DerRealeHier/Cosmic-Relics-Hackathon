@@ -1085,6 +1085,8 @@ function openModelInspector() {
   const kickerEl = document.getElementById('inspector-model-kicker');
   const partsListEl = document.getElementById('inspector-parts-list');
   const spinBtn = document.getElementById('inspector-autospin-btn');
+  const stageHintEl = modal.querySelector('.inspector-stage-hint');
+  const defaultHintText = 'Drag to rotate 360° · Scroll to zoom · Click a part on the right to focus';
 
   if (titleEl) titleEl.textContent = item.title;
   if (kickerEl) {
@@ -1124,10 +1126,26 @@ function openModelInspector() {
 
       btn.addEventListener('click', () => {
         if (!inspector3d) return;
+        const wasSelected = btn.classList.contains('is-selected');
         partsListEl.querySelectorAll('.inspector-part-card').forEach((c) => c.classList.remove('is-selected'));
+        if (wasSelected) {
+          inspector3d.resetView();
+          if (spinBtn) {
+            spinBtn.disabled = false;
+            spinBtn.setAttribute('aria-pressed', 'true');
+          }
+          if (stageHintEl) stageHintEl.textContent = defaultHintText;
+          return;
+        }
         btn.classList.add('is-selected');
         inspector3d.focusPart({ yaw: p.yaw, pitch: p.pitch, zoom: p.zoom, pos: p.pos || null, name: p.name });
-        if (spinBtn) spinBtn.setAttribute('aria-pressed', 'false');
+        if (spinBtn) {
+          spinBtn.disabled = true;
+          spinBtn.setAttribute('aria-pressed', 'false');
+        }
+        if (stageHintEl) {
+          stageHintEl.textContent = '🔒 Rotation locked on component · Scroll to zoom · Click part again to exit focus';
+        }
       });
 
       partsListEl.appendChild(btn);
@@ -1158,7 +1176,11 @@ function openModelInspector() {
   if (geom) {
     inspector3d.setGeometry(geom);
   }
-  if (spinBtn) spinBtn.setAttribute('aria-pressed', 'true');
+  if (spinBtn) {
+    spinBtn.disabled = false;
+    spinBtn.setAttribute('aria-pressed', 'true');
+  }
+  if (stageHintEl) stageHintEl.textContent = defaultHintText;
   inspector3d.start();
 }
 
@@ -1167,6 +1189,8 @@ function initModelInspector() {
   const closeBtn = document.getElementById('close-inspector-btn');
   const resetBtn = document.getElementById('inspector-reset-btn');
   const spinBtn = document.getElementById('inspector-autospin-btn');
+  const stageHintEl = modal?.querySelector('.inspector-stage-hint');
+  const defaultHintText = 'Drag to rotate 360° · Scroll to zoom · Click a part on the right to focus';
   const openBtn = document.getElementById('open-inspector-btn');
 
   openBtn?.addEventListener('click', openModelInspector);
@@ -1177,14 +1201,18 @@ function initModelInspector() {
 
   resetBtn?.addEventListener('click', () => {
     inspector3d?.resetView();
-    if (spinBtn) spinBtn.setAttribute('aria-pressed', 'true');
+    if (spinBtn) {
+      spinBtn.disabled = false;
+      spinBtn.setAttribute('aria-pressed', 'true');
+    }
+    if (stageHintEl) stageHintEl.textContent = defaultHintText;
     document.querySelectorAll('#inspector-parts-list .inspector-part-card').forEach((c) => {
       c.classList.remove('is-selected');
     });
   });
 
   spinBtn?.addEventListener('click', () => {
-    if (!inspector3d) return;
+    if (!inspector3d || inspector3d.rotationLocked) return;
     inspector3d.autoSpin = !inspector3d.autoSpin;
     spinBtn.setAttribute('aria-pressed', inspector3d.autoSpin ? 'true' : 'false');
   });

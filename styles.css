@@ -2143,6 +2143,17 @@
     cursor: grabbing;
   }
 
+  .inspector-3d-canvas.is-rotation-locked,
+  .inspector-3d-canvas.is-rotation-locked:active {
+    cursor: default;
+  }
+
+  .inspector-header-actions .pill-action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
   .inspector-stage-hint {
     position: absolute;
     inset-block-end: 0.65rem;

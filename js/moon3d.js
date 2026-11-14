@@ -3293,6 +3293,7 @@ export class ModelInspector3D {
     this.targetZoom = 2.15;
     this.currentZoom = 2.15;
     this.autoSpin = true;
+    this.rotationLocked = false;
     this.isDragging = false;
     this.lastX = 0;
     this.lastY = 0;
@@ -3332,6 +3333,7 @@ export class ModelInspector3D {
     if (!el) return;
 
     el.addEventListener('pointerdown', (e) => {
+      if (this.rotationLocked) return;
       this.isDragging = true;
       this.lastX = e.clientX;
       this.lastY = e.clientY;
@@ -3339,7 +3341,7 @@ export class ModelInspector3D {
     });
 
     el.addEventListener('pointermove', (e) => {
-      if (!this.isDragging) return;
+      if (!this.isDragging || this.rotationLocked) return;
       const dx = e.clientX - this.lastX;
       const dy = e.clientY - this.lastY;
       this.targetRotY += dx * 0.012;
@@ -3412,6 +3414,9 @@ export class ModelInspector3D {
 
   focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85, pos = null, name = '' } = {}) {
     this.autoSpin = false;
+    this.rotationLocked = true;
+    this.isDragging = false;
+    this.canvas?.classList.add('is-rotation-locked');
     this.targetRotY = yaw;
     this.targetRotX = pitch;
     this.targetZoom = zoom;
@@ -3435,6 +3440,8 @@ export class ModelInspector3D {
     this.targetRotX = 0.25;
     this.targetZoom = 2.15;
     this.autoSpin = true;
+    this.rotationLocked = false;
+    this.canvas?.classList.remove('is-rotation-locked');
     this.highlightActive = false;
     this.highlightLabel = '';
     this.onCalloutProject?.({ visible: false });
@@ -3477,7 +3484,7 @@ export class ModelInspector3D {
     this.currentRotY += (this.targetRotY - this.currentRotY) * 0.1;
     this.currentRotX += (this.targetRotX - this.currentRotX) * 0.1;
     this.currentZoom += (this.targetZoom - this.currentZoom) * 0.1;
-    if (this.autoSpin && !this.isDragging) {
+    if (this.autoSpin && !this.isDragging && !this.rotationLocked) {
       this.targetRotY += 0.0045;
     }
 
