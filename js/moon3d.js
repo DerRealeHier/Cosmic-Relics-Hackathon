@@ -109,13 +109,25 @@ uniform mat4 uView;
 uniform mat4 uModel;
 uniform mat3 uNormalMatrix;
 uniform float uOutlinePass; // 1.0 when rendering comic black ink outline
+uniform float uHideAura;    // 1.0 in Detail Inspector to hide the yellow ground ring
 
 out vec3 vNormal;
 out vec3 vWorldPos;
+out vec3 vLocalPos;
 out vec3 vColor;
 out vec2 vMeta;
 
 void main() {
+  if (uHideAura > 0.5 && aMeta.y < -0.25) {
+    vNormal = vec3(0.0, 1.0, 0.0);
+    vWorldPos = vec3(0.0);
+    vLocalPos = aPosition;
+    vColor = aColor;
+    vMeta = aMeta;
+    gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+    return;
+  }
+
   vec3 norm = normalize(aNormal);
   vec3 pos = aPosition;
 
@@ -127,6 +139,7 @@ void main() {
 
   vec4 worldPos = uModel * vec4(pos, 1.0);
   vWorldPos = worldPos.xyz;
+  vLocalPos = aPosition;
   vNormal = normalize(uNormalMatrix * norm);
   vColor = aColor;
   vMeta = aMeta;
@@ -140,12 +153,16 @@ precision highp int;
 
 in vec3 vNormal;
 in vec3 vWorldPos;
+in vec3 vLocalPos;
 in vec3 vColor;
 in vec2 vMeta;
 
 uniform vec3 uCameraPos;
 uniform float uPulse;
 uniform float uOutlinePass;
+uniform float uHideAura;
+uniform float uHighlightActive;
+uniform vec3 uHighlightPos;
 
 out vec4 fragColor;
 
@@ -157,6 +174,10 @@ vec3 comicGradientRamp(float irr) {
 }
 
 void main() {
+  if (uHideAura > 0.5 && vMeta.y < -0.25) {
+    discard;
+  }
+
   // Pass 1: Crisp black ink outline (#050811)
   if (uOutlinePass > 0.5) {
     if (vMeta.x <= 0.0001) discard;
@@ -186,6 +207,13 @@ void main() {
   // Emissive boost matching createComicMaterial(hex, emissiveHex, emissiveIntensity)
   float emissiveBoost = clamp(vMeta.y, 0.0, 1.0);
   vec3 shaded = vColor * mix(ramp, vec3(1.15), emissiveBoost * 0.65);
+
+  if (uHighlightActive > 0.5) {
+    float dist = length(vLocalPos - uHighlightPos);
+    float spot = 1.0 - smoothstep(0.14, 0.42, dist);
+    vec3 glowTint = vec3(0.32, 0.22, 0.04) * (0.55 + 0.45 * uPulse);
+    shaded = mix(shaded * 0.45, shaded * 1.15 + glowTint, spot);
+  }
 
   fragColor = vec4(shaded, 1.0);
 }
@@ -2711,7 +2739,10 @@ export class Horizon3DEngine {
       uNormalMatrix: gl.getUniformLocation(this.monumentProg, 'uNormalMatrix'),
       uCameraPos: gl.getUniformLocation(this.monumentProg, 'uCameraPos'),
       uPulse: gl.getUniformLocation(this.monumentProg, 'uPulse'),
-      uOutlinePass: gl.getUniformLocation(this.monumentProg, 'uOutlinePass')
+      uOutlinePass: gl.getUniformLocation(this.monumentProg, 'uOutlinePass'),
+      uHideAura: gl.getUniformLocation(this.monumentProg, 'uHideAura'),
+      uHighlightActive: gl.getUniformLocation(this.monumentProg, 'uHighlightActive'),
+      uHighlightPos: gl.getUniformLocation(this.monumentProg, 'uHighlightPos')
     };
 
     // 1. Build the exact 96x96 comic relief sphere (radius = 5.2) from (1).html
@@ -3209,6 +3240,9 @@ export class Horizon3DEngine {
       gl.uniformMatrix3fv(this.monumentLocs.uNormalMatrix, false, monNormalMat);
       gl.uniform3f(this.monumentLocs.uCameraPos, camPos[0], camPos[1], camPos[2]);
       gl.uniform1f(this.monumentLocs.uPulse, pulse);
+      gl.uniform1f(this.monumentLocs.uHideAura, 0.0);
+      gl.uniform1f(this.monumentLocs.uHighlightActive, 0.0);
+      gl.uniform3f(this.monumentLocs.uHighlightPos, 0.0, 0.0, 0.0);
 
       gl.bindVertexArray(monMesh.vao);
 
@@ -3241,13 +3275,17 @@ export class Horizon3DEngine {
 }
 
 export class ModelInspector3D {
-  constructor(canvas) {
+  constructor(canvas, onCalloutProject = null) {
     this.canvas = canvas;
+    this.onCalloutProject = onCalloutProject;
     this.gl = canvas ? canvas.getContext('webgl2', { antialias: true, alpha: true }) : null;
     this.prog = null;
     this.locs = null;
     this.mesh = null;
     this.centerY = 0;
+    this.highlightActive = false;
+    this.highlightPos = [0, 0, 0];
+    this.highlightLabel = '';
     this.targetRotY = 0.55;
     this.currentRotY = 0.55;
     this.targetRotX = 0.25;
@@ -3282,7 +3320,10 @@ export class ModelInspector3D {
       uNormalMatrix: gl.getUniformLocation(this.prog, 'uNormalMatrix'),
       uCameraPos: gl.getUniformLocation(this.prog, 'uCameraPos'),
       uPulse: gl.getUniformLocation(this.prog, 'uPulse'),
-      uOutlinePass: gl.getUniformLocation(this.prog, 'uOutlinePass')
+      uOutlinePass: gl.getUniformLocation(this.prog, 'uOutlinePass'),
+      uHideAura: gl.getUniformLocation(this.prog, 'uHideAura'),
+      uHighlightActive: gl.getUniformLocation(this.prog, 'uHighlightActive'),
+      uHighlightPos: gl.getUniformLocation(this.prog, 'uHighlightPos')
     };
   }
 
@@ -3369,11 +3410,24 @@ export class ModelInspector3D {
     this.renderFrame(performance.now());
   }
 
-  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85 } = {}) {
+  focusPart({ yaw = 0.55, pitch = 0.25, zoom = 1.85, pos = null, name = '' } = {}) {
     this.autoSpin = false;
     this.targetRotY = yaw;
     this.targetRotX = pitch;
     this.targetZoom = zoom;
+    this.highlightActive = true;
+    this.highlightLabel = name;
+    if (Array.isArray(pos) && pos.length === 3) {
+      this.highlightPos = pos;
+    } else {
+      // Derive an accurate 3D surface anchor on the front-facing side of the selected viewing angle
+      const r = 0.22;
+      this.highlightPos = [
+        -Math.sin(yaw) * Math.cos(pitch) * r,
+        this.centerY + Math.sin(pitch) * 0.24,
+        Math.cos(yaw) * Math.cos(pitch) * r
+      ];
+    }
   }
 
   resetView() {
@@ -3381,6 +3435,9 @@ export class ModelInspector3D {
     this.targetRotX = 0.25;
     this.targetZoom = 2.15;
     this.autoSpin = true;
+    this.highlightActive = false;
+    this.highlightLabel = '';
+    this.onCalloutProject?.({ visible: false });
   }
 
   start() {
@@ -3450,6 +3507,9 @@ export class ModelInspector3D {
     gl.uniformMatrix3fv(this.locs.uNormalMatrix, false, normalMat);
     gl.uniform3f(this.locs.uCameraPos, camPos[0], camPos[1], camPos[2]);
     gl.uniform1f(this.locs.uPulse, pulse);
+    gl.uniform1f(this.locs.uHideAura, 1.0);
+    gl.uniform1f(this.locs.uHighlightActive, this.highlightActive ? 1.0 : 0.0);
+    gl.uniform3f(this.locs.uHighlightPos, this.highlightPos[0], this.highlightPos[1], this.highlightPos[2]);
 
     gl.bindVertexArray(this.mesh.vao);
 
@@ -3463,6 +3523,23 @@ export class ModelInspector3D {
     gl.drawElements(gl.TRIANGLES, this.mesh.count, this.mesh.indexType, 0);
 
     gl.bindVertexArray(null);
+
+    if (this.highlightActive && this.onCalloutProject) {
+      const mvp = mat4Multiply(mat4Multiply(proj, view), model);
+      const hx = this.highlightPos[0];
+      const hy = this.highlightPos[1];
+      const hz = this.highlightPos[2];
+      const cx = mvp[0] * hx + mvp[4] * hy + mvp[8] * hz + mvp[12];
+      const cy = mvp[1] * hx + mvp[5] * hy + mvp[9] * hz + mvp[13];
+      const cw = mvp[3] * hx + mvp[7] * hy + mvp[11] * hz + mvp[15] || 1;
+      const rect = this.canvas.getBoundingClientRect();
+      this.onCalloutProject({
+        visible: cw > 0.1,
+        x: ((cx / cw) * 0.5 + 0.5) * rect.width,
+        y: (-(cy / cw) * 0.5 + 0.5) * rect.height,
+        label: this.highlightLabel
+      });
+    }
   }
 }
 
