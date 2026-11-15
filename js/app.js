@@ -488,22 +488,12 @@ function renderStoryContent() {
   const mapCoords = document.getElementById('map-coords');
   const regionName = document.getElementById('map-region-name');
   const counterEl = document.getElementById('mission-counter');
-  const statusDot = document.getElementById('status-dot');
-  const statusText = document.getElementById('mission-status-text');
 
   if (yearBadge) yearBadge.textContent = item.year;
   if (titleEl) titleEl.textContent = item.title;
   if (mapCoords) mapCoords.textContent = item.coords;
   if (regionName) regionName.textContent = item.region;
   if (counterEl) counterEl.textContent = `${currentIndex + 1} / ${artifacts.length}`;
-
-  if (statusDot) {
-    const colorKey = item.statusColor || 'emerald';
-    statusDot.className = `status-dot is-${colorKey}`;
-  }
-  if (statusText) {
-    statusText.textContent = `Status: ${item.status}`;
-  }
 
   const contentArea = document.getElementById('story-content-area');
   if (!contentArea) return;
