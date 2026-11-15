@@ -1264,11 +1264,15 @@
 
   .repo-link-btn {
     display: inline-flex;
+    flex-direction: row;
     align-items: center;
     gap: 0.35rem;
+    white-space: nowrap;
   }
 
   .github-mark-icon {
+    inline-size: 14px;
+    block-size: 14px;
     flex-shrink: 0;
   }
 
