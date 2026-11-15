@@ -1257,6 +1257,11 @@
     color: #7dd3fc;
   }
 
+  .footer-sep {
+    color: var(--slate-500, #64748b);
+    user-select: none;
+  }
+
   /* 4. TOP-RIGHT RADAR MAP CARD */
   .map-hud-card {
     border-radius: var(--r-lg);
