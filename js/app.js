@@ -502,12 +502,9 @@ function renderStoryContent() {
       stageWatermark.textContent =
         currentRealm === 'universe'
           ? '3D Spacecraft: Official NASA .glb (shader-styled)'
-          : '3D Spacecraft & Globe: Official NASA .glb (shader-styled)';
+          : '3D Spacecraft: Official NASA .glb (shader-styled) · Procedural Globe: SI-generated';
     } else {
-      stageWatermark.textContent =
-        currentRealm === 'universe'
-          ? 'SI-Generated Procedural 3D Visual'
-          : 'Globe: Official NASA .glb (shader-styled) · Spacecraft: SI-Generated Procedural 3D Visual';
+      stageWatermark.textContent = 'SI-Generated Procedural 3D Visual';
     }
   }
 

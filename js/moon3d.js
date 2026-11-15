@@ -444,9 +444,27 @@ function craterProfile(ux, uy, uz, latDeg, lonDeg, radRad, depth, rim) {
   if (ang > radRad * 1.45) return 0;
   const t = ang / radRad;
   const bowl = t < 1.0 ? -depth * Math.cos(t * Math.PI * 0.5) : 0;
-  const rk = (t - 1.0) / 0.22;
+  const rk = (t - 1.0) / 0.20;
   const ridge = rim * Math.exp(-rk * rk);
-  return bowl + ridge;
+  const centralPeak = peak > 0 && t < 0.45 ? peak * Math.exp(-Math.pow(t / 0.18, 2)) : 0;
+  return bowl + ridge + centralPeak;
+}
+
+function craterProfileWithPeak(ux, uy, uz, latDeg, lonDeg, radRad, depth, rim, peak = 0) {
+  const lat = (latDeg * Math.PI) / 180;
+  const lon = (lonDeg * Math.PI) / 180;
+  const cx = Math.cos(lat) * Math.sin(lon);
+  const cy = Math.sin(lat);
+  const cz = Math.cos(lat) * Math.cos(lon);
+  const dot = Math.max(-1, Math.min(1, ux * cx + uy * cy + uz * cz));
+  const ang = Math.acos(dot);
+  if (ang > radRad * 1.9) return 0;
+  const t = ang / radRad;
+  const bowl = t < 1.0 ? -depth * Math.cos(t * Math.PI * 0.5) : 0;
+  const rk = (t - 1.0) / 0.20;
+  const ridge = rim * Math.exp(-rk * rk);
+  const centralPeak = peak > 0 && t < 0.45 ? peak * Math.exp(-Math.pow(t / 0.18, 2)) : 0;
+  return bowl + ridge + centralPeak;
 }
 
 function evalComicPlanetPoint(ux, uy, uz, radius = 5.2, body = 'moon') {
@@ -455,29 +473,55 @@ function evalComicPlanetPoint(ux, uy, uz, radius = 5.2, body = 'moon') {
   const vz = uz * radius;
 
   if (body === 'mars') {
-    // Distinct Martian planetary geometry: oblate polar flattening + Tharsis bulge + Olympus Mons + Valles Marineris canyon + Hellas basin
+    // Detailed Martian topography: oblate polar flattening + Tharsis bulge + Olympus Mons (with caldera) + Tharsis Montes + Valles Marineris + Hellas/Argyre/Isidis basins + Gale/Jezero craters
     const oblate = 1.0 - 0.032 * uy * uy;
-    const tharsisBulge = gaussSpot(ux, uy, uz, 2.0, -106.0, 0.52, 0.14);
-    const olympus = gaussSpot(ux, uy, uz, 18.65, -133.8, 0.14, 0.34) - gaussSpot(ux, uy, uz, 18.65, -133.8, 0.035, 0.09);
-    const ascraeus = gaussSpot(ux, uy, uz, 11.8, -104.1, 0.08, 0.20);
-    const pavonis = gaussSpot(ux, uy, uz, 1.5, -112.8, 0.08, 0.19);
-    const arsia = gaussSpot(ux, uy, uz, -8.3, -120.1, 0.09, 0.21);
-    const elysium = gaussSpot(ux, uy, uz, 25.0, 147.2, 0.11, 0.20);
-    const hellas = gaussSpot(ux, uy, uz, -42.4, 70.5, 0.34, -0.22);
+    const tharsisBulge = gaussSpot(ux, uy, uz, 2.0, -106.0, 0.54, 0.16);
+    const olympus =
+      gaussSpot(ux, uy, uz, 18.65, -133.8, 0.14, 0.40) -
+      gaussSpot(ux, uy, uz, 18.65, -133.8, 0.032, 0.12);
+    const ascraeus =
+      gaussSpot(ux, uy, uz, 11.8, -104.1, 0.085, 0.24) -
+      gaussSpot(ux, uy, uz, 11.8, -104.1, 0.020, 0.07);
+    const pavonis =
+      gaussSpot(ux, uy, uz, 1.5, -112.8, 0.085, 0.22) -
+      gaussSpot(ux, uy, uz, 1.5, -112.8, 0.020, 0.06);
+    const arsia =
+      gaussSpot(ux, uy, uz, -8.3, -120.1, 0.095, 0.25) -
+      gaussSpot(ux, uy, uz, -8.3, -120.1, 0.025, 0.08);
+    const elysium = gaussSpot(ux, uy, uz, 25.0, 147.2, 0.11, 0.23);
+    const albaMons = gaussSpot(ux, uy, uz, 40.5, -109.6, 0.18, 0.13);
 
-    // Valles Marineris equatorial canyon slash (-8..-19 S, -92..-32 W)
+    const basins =
+      gaussSpot(ux, uy, uz, -42.4, 70.5, 0.34, -0.26) + // Hellas Planitia
+      gaussSpot(ux, uy, uz, -49.7, -44.0, 0.18, -0.17) + // Argyre Planitia
+      gaussSpot(ux, uy, uz, 12.9, 87.0, 0.20, -0.12) +   // Isidis Planitia
+      gaussSpot(ux, uy, uz, 46.7, 118.0, 0.36, -0.10);   // Utopia Planitia
+
+    const marsCraters =
+      craterProfileWithPeak(ux, uy, uz, -5.4, 137.8, 0.065, 0.11, 0.045, 0.065) + // Gale Crater + Mount Sharp
+      craterProfileWithPeak(ux, uy, uz, 18.4, 77.5, 0.055, 0.09, 0.04, 0.02) +   // Jezero Crater
+      craterProfileWithPeak(ux, uy, uz, -14.6, 175.4, 0.06, 0.095, 0.04, 0.015) + // Gusev Crater
+      craterProfileWithPeak(ux, uy, uz, -39.0, -158.0, 0.09, 0.12, 0.05, 0.03) +
+      craterProfileWithPeak(ux, uy, uz, -21.0, -12.0, 0.08, 0.11, 0.045, 0.025) +
+      craterProfileWithPeak(ux, uy, uz, 22.5, -48.0, 0.05, 0.07, 0.035, 0.0) +   // Chryse / Viking 1 area
+      craterProfileWithPeak(ux, uy, uz, -24.0, 35.0, 0.075, 0.10, 0.045, 0.02);
+
+    // Valles Marineris equatorial canyon slash (-8..-19 S, -92..-32 W) with flanking rim ridges
     const latDeg = (Math.asin(Math.max(-1, Math.min(1, uy))) * 180) / Math.PI;
     const lonDeg = ((Math.atan2(ux, uz) * 180) / Math.PI);
-    const dLatCanyon = (latDeg + 13.5) / 5.2;
-    const lonSlope = lonDeg > -92 && lonDeg < -32 ? 1.0 : Math.exp(-Math.pow((lonDeg + 62) / 38, 4));
-    const canyon = -0.25 * Math.exp(-dLatCanyon * dLatCanyon) * (lonDeg > -95 && lonDeg < -28 ? lonSlope : 0);
+    const dLatCanyon = (latDeg + 13.5) / 4.4;
+    const lonMask = lonDeg > -95 && lonDeg < -28 ? Math.exp(-Math.pow((lonDeg + 62) / 36, 4)) : 0;
+    const canyonFloor = -0.32 * Math.exp(-dLatCanyon * dLatCanyon) * lonMask;
+    const canyonRims =
+      0.06 * (Math.exp(-Math.pow((latDeg + 7.2) / 2.2, 2)) + Math.exp(-Math.pow((latDeg + 19.8) / 2.2, 2))) * lonMask;
 
-    // Stepped polar ice caps + angular Martian canyon/mesa relief (distinct from circular lunar craters)
-    const polarCap = Math.abs(latDeg) > 79 ? 0.065 * Math.min(1, (Math.abs(latDeg) - 79) / 5) : 0;
+    // Stepped polar ice caps + multi-octave Martian mesa/ridge relief
+    const polarCap = Math.abs(latDeg) > 79 ? 0.075 * Math.min(1, (Math.abs(latDeg) - 79) / 4.5) : 0;
     const windRidges =
-      Math.sin(vx * 2.2 - vz * 2.6) * 0.032 +
-      Math.cos(vy * 5.8 + vx * 3.4) * 0.022 +
-      Math.sin(vz * 8.1 + vy * 4.7) * 0.012;
+      Math.sin(vx * 2.2 - vz * 2.6) * 0.034 +
+      Math.cos(vy * 5.8 + vx * 3.4) * 0.024 +
+      Math.sin(vz * 9.5 + vy * 6.2) * 0.015 +
+      Math.cos(vx * 14.0 - vy * 11.0) * 0.008;
 
     const r =
       radius * oblate +
@@ -487,32 +531,52 @@ function evalComicPlanetPoint(ux, uy, uz, radius = 5.2, body = 'moon') {
       pavonis +
       arsia +
       elysium +
-      hellas +
-      canyon +
+      albaMons +
+      basins +
+      marsCraters +
+      canyonFloor +
+      canyonRims +
       polarCap +
       windRidges;
     return [ux * r, uy * r, uz * r];
   }
 
-  // Moon: spherical lunar silhouette + dark lowland Maria basins + crisp ringed circular impact craters
+  // Moon: spherical lunar silhouette + lowland Maria basins + multi-scale ringed craters with central peaks
   const maria =
-    gaussSpot(ux, uy, uz, 32.8, -15.6, 0.36, -0.10) + // Imbrium
-    gaussSpot(ux, uy, uz, 28.0, 17.5, 0.26, -0.09) +  // Serenitatis
-    gaussSpot(ux, uy, uz, 8.5, 31.4, 0.28, -0.08) +   // Tranquillitatis
-    gaussSpot(ux, uy, uz, 18.4, -57.4, 0.44, -0.09) + // Procellarum
-    gaussSpot(ux, uy, uz, 17.0, 59.1, 0.16, -0.11) +  // Crisium
-    gaussSpot(ux, uy, uz, -53.0, -169.0, 0.48, -0.13); // South Pole-Aitken
+    gaussSpot(ux, uy, uz, 32.8, -15.6, 0.36, -0.11) + // Imbrium
+    gaussSpot(ux, uy, uz, 28.0, 17.5, 0.26, -0.10) +  // Serenitatis
+    gaussSpot(ux, uy, uz, 8.5, 31.4, 0.28, -0.09) +   // Tranquillitatis
+    gaussSpot(ux, uy, uz, 18.4, -57.4, 0.44, -0.10) + // Procellarum
+    gaussSpot(ux, uy, uz, 17.0, 59.1, 0.16, -0.12) +  // Crisium
+    gaussSpot(ux, uy, uz, -15.2, 35.5, 0.20, -0.09) + // Nectaris
+    gaussSpot(ux, uy, uz, -24.4, -38.6, 0.19, -0.08) + // Humorum
+    gaussSpot(ux, uy, uz, -7.8, 51.3, 0.22, -0.08) +  // Fecunditatis
+    gaussSpot(ux, uy, uz, -53.0, -169.0, 0.48, -0.15); // South Pole-Aitken
+
   const craters =
-    craterProfile(ux, uy, uz, -43.3, -11.2, 0.11, 0.14, 0.055) + // Tycho
-    craterProfile(ux, uy, uz, 9.6, -20.1, 0.10, 0.12, 0.05) +   // Copernicus
-    craterProfile(ux, uy, uz, 23.7, -47.4, 0.08, 0.11, 0.045) + // Aristarchus
-    craterProfile(ux, uy, uz, 51.6, -9.3, 0.08, 0.10, 0.04) +   // Plato
-    craterProfile(ux, uy, uz, -84.0, -49.0, 0.09, 0.13, 0.045) + // Cabeus polar pit
-    craterProfile(ux, uy, uz, 6.0, -68.0, 0.09, 0.11, 0.04);
+    craterProfileWithPeak(ux, uy, uz, -43.3, -11.2, 0.115, 0.16, 0.065, 0.06) +  // Tycho
+    craterProfileWithPeak(ux, uy, uz, 9.6, -20.1, 0.105, 0.14, 0.06, 0.05) +     // Copernicus
+    craterProfileWithPeak(ux, uy, uz, 8.1, -38.0, 0.06, 0.095, 0.04, 0.025) +    // Kepler
+    craterProfileWithPeak(ux, uy, uz, 23.7, -47.4, 0.08, 0.12, 0.05, 0.03) +     // Aristarchus
+    craterProfileWithPeak(ux, uy, uz, 51.6, -9.3, 0.085, 0.11, 0.048, 0.0) +     // Plato (flat floor)
+    craterProfileWithPeak(ux, uy, uz, -58.4, -14.4, 0.12, 0.15, 0.06, 0.04) +    // Clavius
+    craterProfileWithPeak(ux, uy, uz, -9.2, -1.8, 0.09, 0.11, 0.045, 0.02) +     // Ptolemaeus
+    craterProfileWithPeak(ux, uy, uz, -11.4, 26.3, 0.075, 0.12, 0.05, 0.04) +    // Theophilus
+    craterProfileWithPeak(ux, uy, uz, -8.9, 60.9, 0.08, 0.115, 0.048, 0.035) +   // Langrenus
+    craterProfileWithPeak(ux, uy, uz, 29.7, -4.0, 0.07, 0.10, 0.042, 0.0) +      // Archimedes
+    craterProfileWithPeak(ux, uy, uz, -5.2, -68.6, 0.085, 0.12, 0.045, 0.0) +    // Grimaldi
+    craterProfileWithPeak(ux, uy, uz, -20.4, 129.1, 0.10, 0.14, 0.055, 0.05) +   // Tsiolkovskiy
+    craterProfileWithPeak(ux, uy, uz, -84.0, -49.0, 0.09, 0.14, 0.05, 0.02) +    // Cabeus polar pit
+    craterProfileWithPeak(ux, uy, uz, -89.6, 129.0, 0.06, 0.11, 0.045, 0.0) +    // Shackleton
+    craterProfileWithPeak(ux, uy, uz, 6.0, -68.0, 0.085, 0.11, 0.042, 0.02) +
+    craterProfileWithPeak(ux, uy, uz, 38.0, 62.0, 0.07, 0.10, 0.04, 0.02) +
+    craterProfileWithPeak(ux, uy, uz, -32.0, 82.0, 0.08, 0.11, 0.045, 0.025);
+
   const microRelief =
-    Math.sin(vx * 3.1 + vy * 2.4) * 0.045 +
-    Math.cos(vz * 4.2 - vx * 2.8) * 0.035 +
-    Math.sin(vy * 7.5 + vz * 6.0) * 0.015;
+    Math.sin(vx * 3.1 + vy * 2.4) * 0.042 +
+    Math.cos(vz * 4.2 - vx * 2.8) * 0.034 +
+    Math.sin(vy * 8.5 + vz * 7.2) * 0.018 +
+    Math.cos(vx * 14.2 - vz * 12.6) * 0.009;
 
   const r = radius + maria + craters + microRelief;
   return [ux * r, uy * r, uz * r];
@@ -3134,9 +3198,9 @@ export class Horizon3DEngine {
       uHighlightPos: gl.getUniformLocation(this.monumentProg, 'uHighlightPos')
     };
 
-    // 1. Build TWO genuinely distinct 3D comic planet meshes: cratered Moon sphere vs oblate Olympus/Marineris Mars!
-    this.planetMeshes.moon = this._createPlanetVao(buildComicReliefSphere(5.2, 112, 112, 'moon'));
-    this.planetMeshes.mars = this._createPlanetVao(buildComicReliefSphere(5.2, 112, 112, 'mars'));
+    // 1. Build TWO genuinely distinct high-detail 3D comic planet meshes: cratered Moon sphere vs oblate Olympus/Marineris Mars!
+    this.planetMeshes.moon = this._createPlanetVao(buildComicReliefSphere(5.2, 168, 168, 'moon'));
+    this.planetMeshes.mars = this._createPlanetVao(buildComicReliefSphere(5.2, 168, 168, 'mars'));
     this.planetVao = this.planetMeshes.moon.vao;
     this.planetIndexCount = this.planetMeshes.moon.count;
     this.planetIndexType = this.planetMeshes.moon.type;
@@ -3255,9 +3319,7 @@ export class Horizon3DEngine {
     this.onStatusChange('Comic 3D Horizon Active');
     this.renderFrame(performance.now());
 
-    // Load official NASA Moon & Mars topographic .glb globes in the background, plus active spacecraft .glb
-    this._loadOfficialPlanet('moon');
-    this._loadOfficialPlanet('mars');
+    // Load active spacecraft .glb first, then preload the rest (planets use high-detail procedural comic topography)
     this._officialLoading = this._officialLoading || new Set();
     this._officialLoaded = this._officialLoaded || new Set();
     await this._loadOfficialModel(this.artifactId);
