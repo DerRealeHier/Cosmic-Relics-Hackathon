@@ -75,3 +75,7 @@ Then open `http://127.0.0.1:8000/`. On Windows you can also double-click `start_
     ├── nasa/           # Local NASA mission photographs and .glb 3D models
     └── vendor/         # Self-contained font assets
 ```
+
+
+
+> Created by: Philipp P. | Simon P. | Paul K. 
