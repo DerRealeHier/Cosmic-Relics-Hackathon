@@ -364,13 +364,11 @@ function renderMapPins() {
     g.setAttribute('role', 'button');
     g.setAttribute('aria-label', `${item.title} (${item.coords})`);
     g.addEventListener('click', () => {
-      window.dismissCoachmark?.('tutorial-map-coachmark');
       selectMission(idx);
     });
     g.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        window.dismissCoachmark?.('tutorial-map-coachmark');
         selectMission(idx);
       }
     });
@@ -1102,15 +1100,15 @@ function initLayoutCustomizerAndTutorials() {
     if (!targetId) return;
     document.getElementById(targetId)?.classList.add('is-hidden');
     try {
-      localStorage.setItem(`cr_coachmark_${targetId}`, '1');
+      localStorage.setItem(`cr_coachmark_v2_${targetId}`, '1');
     } catch (_) {}
   };
   window.dismissCoachmark = dismissCoachmark;
 
-  // Restore previously completed/dismissed coachmarks
+  // Restore coachmarks only if explicitly dismissed via the X button
   ['tutorial-3d-coachmark', 'tutorial-map-coachmark'].forEach((id) => {
     try {
-      if (localStorage.getItem(`cr_coachmark_${id}`) === '1') {
+      if (localStorage.getItem(`cr_coachmark_v2_${id}`) === '1') {
         document.getElementById(id)?.classList.add('is-hidden');
       }
     } catch (_) {}
@@ -1124,32 +1122,12 @@ function initLayoutCustomizerAndTutorials() {
     });
   });
 
-  // Auto-dismiss 3D coachmark when user orbits or zooms the 3D stage
-  const stageContainer = document.getElementById('moon-3d-container');
-  if (stageContainer) {
-    let stagePointerStart = null;
-    stageContainer.addEventListener('pointerdown', (e) => {
-      stagePointerStart = { x: e.clientX, y: e.clientY };
-    });
-    stageContainer.addEventListener('pointermove', (e) => {
-      if (!stagePointerStart) return;
-      if (Math.hypot(e.clientX - stagePointerStart.x, e.clientY - stagePointerStart.y) > 8) {
-        stagePointerStart = null;
-        dismissCoachmark('tutorial-3d-coachmark');
-      }
-    });
-    window.addEventListener('pointerup', () => {
-      stagePointerStart = null;
-    });
-    stageContainer.addEventListener('wheel', () => dismissCoachmark('tutorial-3d-coachmark'), { passive: true });
-  }
-
   // Visual Interactive Guide Modal
   const openTutorialModal = () => {
     ['tutorial-3d-coachmark', 'tutorial-map-coachmark'].forEach((id) => {
       document.getElementById(id)?.classList.remove('is-hidden');
       try {
-        localStorage.removeItem(`cr_coachmark_${id}`);
+        localStorage.removeItem(`cr_coachmark_v2_${id}`);
       } catch (_) {}
     });
     if (!tutorialModal) return;
@@ -1359,9 +1337,6 @@ function initApp() {
       openModelInspector();
     },
     onGlobeModeChange: (isFullGlobe) => {
-      if (isFullGlobe && typeof window.dismissCoachmark === 'function') {
-        window.dismissCoachmark('tutorial-3d-coachmark');
-      }
       const btn = document.getElementById('toggle-full-globe-btn');
       const label = document.getElementById('full-globe-btn-label');
       if (btn) {
@@ -1399,11 +1374,9 @@ function initApp() {
 
   // Arrow Navigation Controls (under Map + on Story Header + Keyboard)
   document.getElementById('map-prev-btn')?.addEventListener('click', () => {
-    if (typeof window.dismissCoachmark === 'function') window.dismissCoachmark('tutorial-map-coachmark');
     selectMission(currentIndex - 1);
   });
   document.getElementById('map-next-btn')?.addEventListener('click', () => {
-    if (typeof window.dismissCoachmark === 'function') window.dismissCoachmark('tutorial-map-coachmark');
     selectMission(currentIndex + 1);
   });
   document.getElementById('story-prev-btn')?.addEventListener('click', () => selectMission(currentIndex - 1));
