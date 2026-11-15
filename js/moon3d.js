@@ -3450,7 +3450,7 @@ export class Horizon3DEngine {
     const latRad = (this.artifactLat * Math.PI) / 180;
     const lonRad = (this.artifactLon * Math.PI) / 180;
     this.targetRotY = -lonRad;
-    this.targetRotX = Math.max(-1.05, Math.min(1.05, latRad * 0.85));
+    this.targetRotX = Math.max(-1.52, Math.min(1.52, latRad));
   }
 
   setFullGlobeMode(enabled, manualLock = false) {
@@ -3459,11 +3459,7 @@ export class Horizon3DEngine {
     this.manualGlobeLock = Boolean(manualLock && enabled);
     if (this.targetGlobeProgress !== nextTarget) {
       this.targetGlobeProgress = nextTarget;
-      if (enabled) {
-        this._focusTargetGlobeLocation();
-      } else {
-        this.targetRotX = 0.0;
-      }
+      this._focusTargetGlobeLocation();
       this.onGlobeModeChange(enabled);
     }
   }
@@ -3486,7 +3482,7 @@ export class Horizon3DEngine {
     }
     if (Number.isFinite(lat)) this.artifactLat = lat;
     if (Number.isFinite(lon)) this.artifactLon = lon;
-    if (this.realm !== 'universe' && this.targetGlobeProgress >= 0.5) {
+    if (this.realm !== 'universe') {
       this._focusTargetGlobeLocation();
     } else if (typeof horizonAngle === 'number') {
       this.targetRotY = horizonAngle;
@@ -3650,39 +3646,31 @@ export class Horizon3DEngine {
     const view = mat4LookAt(camPos, [lookX, lookY, 0.0], [0, 1, 0]);
 
     // Interpolate Planet center & scale so at g=0 it forms a clean bottom horizon,
-    // and at g=1 the entire 3D Moon/Mars globe centers with the spacecraft planted on its real (lat, lon) surface spot!
+    // and at g=1 the entire 3D Moon/Mars globe centers — ALWAYS rotated so the mission's true (lat, lon) faces the user!
     const planetScale = (isMobile ? 0.36 : 0.56) * (1.0 - g) + (isMobile ? 0.17 : 0.21) * g;
     const planetCenterY = (isMobile ? -1.95 : -3.72) * (1.0 - g) - 0.05 * g;
-    const globeTiltX = this.currentRotX * (0.15 + 0.85 * g);
+    const horizonPitchOffset = (isMobile ? -1.06 : -1.16) * (1.0 - g);
+    const globeTiltX = this.currentRotX + horizonPitchOffset;
 
     // Spin longitude around planet's polar axis first, then tilt pitch toward viewer, then position globe in scene
     const planetRotYawScale = mat4FromTranslationRotationScale(0.0, 0.0, 0.0, 0.0, this.currentRotY, 0.0, planetScale);
     const planetTiltTranslate = mat4FromTranslationRotationScale(0.0, planetCenterY, 0.0, globeTiltX, 0.0, 0.0, 1.0);
     const planetModel = mat4Multiply(planetTiltTranslate, planetRotYawScale);
 
-    // Smoothly morph monument surface anchor from Horizon ridge (g=0) to exact mission (lat, lon) on Moon/Mars (g=1)
+    // Anchor monument strictly at its true geographic (lat, lon) on Moon/Mars in BOTH Horizon (g=0) and Full Globe (g=1) modes
     const activeBody = this.realm === 'mars' ? 'mars' : 'moon';
     const activePlanet = this.planetMeshes[activeBody] || this.planetMeshes.moon;
     const samplePlanetSurf = (ux, uy, uz) =>
       activePlanet?.samplePoint ? activePlanet.samplePoint(ux, uy, uz) : evalComicPlanetPoint(ux, uy, uz, 5.2, activeBody);
-    const hLen = Math.hypot(0.85, 5.14, 0.55) || 1;
-    const hDir = [0.85 / hLen, 5.14 / hLen, 0.55 / hLen];
-    const hSurf = samplePlanetSurf(hDir[0], hDir[1], hDir[2]);
     const gDir = latLonToDir(this.artifactLat, this.artifactLon);
     const gSurf = samplePlanetSurf(gDir[0], gDir[1], gDir[2]);
-    const blend = g * g * (3.0 - 2.0 * g);
 
     const posLocal = [
-      hSurf[0] * (1 - blend) + (gSurf[0] - gDir[0] * 0.03) * blend,
-      hSurf[1] * (1 - blend) + (gSurf[1] - gDir[1] * 0.03) * blend,
-      hSurf[2] * (1 - blend) + (gSurf[2] - gDir[2] * 0.03) * blend
+      gSurf[0] - gDir[0] * 0.03,
+      gSurf[1] - gDir[1] * 0.03,
+      gSurf[2] - gDir[2] * 0.03
     ];
-    let upX = hDir[0] * (1 - blend) + gDir[0] * blend;
-    let upY = hDir[1] * (1 - blend) + gDir[1] * blend;
-    let upZ = hDir[2] * (1 - blend) + gDir[2] * blend;
-    const upLen = Math.hypot(upX, upY, upZ) || 1;
-    upX /= upLen; upY /= upLen; upZ /= upLen;
-    const upLocal = [upX, upY, upZ];
+    const upLocal = [gDir[0], gDir[1], gDir[2]];
 
     const ridgeX = planetModel[0] * posLocal[0] + planetModel[4] * posLocal[1] + planetModel[8] * posLocal[2] + planetModel[12];
     const ridgeY = planetModel[1] * posLocal[0] + planetModel[5] * posLocal[1] + planetModel[9] * posLocal[2] + planetModel[13];
