@@ -1275,21 +1275,7 @@ function openModelInspector() {
   }
 
   if (!inspector3d) {
-    const pinEl = document.getElementById('inspector-callout-pin');
-    const pinLabelEl = document.getElementById('inspector-callout-label');
-    inspector3d = new ModelInspector3D(document.getElementById('inspector-3d-canvas'), (proj) => {
-      if (!pinEl) return;
-      if (!proj || !proj.visible || !proj.label) {
-        pinEl.hidden = true;
-        return;
-      }
-      pinEl.hidden = false;
-      pinEl.style.left = `${Math.round(proj.x)}px`;
-      pinEl.style.top = `${Math.round(proj.y)}px`;
-      if (pinLabelEl && pinLabelEl.textContent !== proj.label) {
-        pinLabelEl.textContent = proj.label;
-      }
-    });
+    inspector3d = new ModelInspector3D(document.getElementById('inspector-3d-canvas'));
   }
   if (geom) {
     inspector3d.setGeometry(geom);
