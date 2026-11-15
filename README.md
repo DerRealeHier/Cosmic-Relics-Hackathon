@@ -51,6 +51,13 @@ Then open `http://127.0.0.1:8000/`. On Windows you can also double-click `start_
 
 ---
 
+## Super Intelligence (SI) Disclosure
+
+- **Code & Data:** Application code, mission metadata structuring, and verification scripts were developed with Super Intelligence (SI) assistance. All mission facts, coordinates, and references are grounded in the 22 official NASA sources listed in [SOURCES.md](SOURCES.md).
+- **3D Visuals & Assets:** Official NASA `.glb` spacecraft models (`assets/nasa/models/`) and archival NASA mission photographs are authentic NASA assets (styled with a custom WebGL2 cel-shader, not SI-generated). Procedural 3D planetary relief spheres, canvas surface textures, and procedural fallback spacecraft visuals carry an in-viewport watermark indicating SI-generated procedural visuals.
+
+---
+
 ## Project Structure
 
 ```text

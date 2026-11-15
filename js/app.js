@@ -1,5 +1,5 @@
 import { REALMS, NASA_ARTIFACTS, NASA_RESOURCES, SPACECRAFT_COMPONENTS } from './data.js';
-import { Horizon3DEngine, ModelInspector3D } from './moon3d.js';
+import { Horizon3DEngine, ModelInspector3D, isOfficialNasaGlb } from './moon3d.js';
 
 // =========================================================================
 // 1. APPLICATION STATE
@@ -494,6 +494,19 @@ function renderStoryContent() {
   if (mapCoords) mapCoords.textContent = item.coords;
   if (regionName) regionName.textContent = item.region;
   if (counterEl) counterEl.textContent = `${currentIndex + 1} / ${artifacts.length}`;
+
+  const stageWatermark = document.getElementById('si-stage-watermark');
+  if (stageWatermark) {
+    const official = isOfficialNasaGlb(item.id);
+    if (official) {
+      stageWatermark.textContent =
+        currentRealm === 'universe'
+          ? '3D Spacecraft: Official NASA .glb (shader-styled)'
+          : '3D Spacecraft: Official NASA .glb (shader-styled) · Procedural Globe: SI-generated';
+    } else {
+      stageWatermark.textContent = 'SI-Generated Procedural 3D Visual';
+    }
+  }
 
   const contentArea = document.getElementById('story-content-area');
   if (!contentArea) return;
@@ -1279,6 +1292,12 @@ function openModelInspector() {
   }
   if (geom) {
     inspector3d.setGeometry(geom);
+  }
+  const inspWatermark = document.getElementById('inspector-si-watermark');
+  if (inspWatermark) {
+    inspWatermark.textContent = isOfficialNasaGlb(item.id)
+      ? '3D Model: Official NASA .glb (shader-styled)'
+      : 'SI-Generated Procedural 3D Visual';
   }
   if (spinBtn) {
     spinBtn.disabled = false;

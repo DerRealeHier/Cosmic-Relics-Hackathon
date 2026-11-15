@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="si-disclosure" content="Code, mission metadata formatting, and procedural 3D terrain/fallback visuals were developed with Super Intelligence (SI) assistance. Official NASA .glb spacecraft models and archival NASA photographs are authentic NASA assets." />
   <title>Cosmic Relics</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="styles.css" />
@@ -30,6 +31,10 @@
     </div>
 
     <canvas id="horizon-3d-canvas" aria-hidden="true"></canvas>
+
+    <div id="si-stage-watermark" class="si-watermark" aria-label="Visual origin watermark">
+      3D Spacecraft: Official NASA .glb (shader-styled) · Procedural Globe: SI-generated
+    </div>
 
     <div class="window-resize-handle" data-resize-handle="stage3d" title="Drag corner to resize 3D stage"></div>
   </div>
@@ -437,6 +442,9 @@
       <div class="inspector-body">
         <div class="inspector-stage-wrap">
           <canvas id="inspector-3d-canvas" class="inspector-3d-canvas" aria-label="Interactive 360 degree 3D spacecraft model"></canvas>
+          <div id="inspector-si-watermark" class="si-watermark si-watermark-inspector" aria-label="Inspector visual origin watermark">
+            3D Model: Official NASA .glb (shader-styled)
+          </div>
           <div class="inspector-stage-hint">Drag to rotate 360° · Scroll to zoom · Click a part on the right to focus</div>
         </div>
         <div class="inspector-parts-panel custom-scroll">
@@ -464,7 +472,7 @@
 
       <div class="sources-modal-body custom-scroll">
         <p class="sources-modal-intro">
-          Every historical mission narrative, coordinate, scientific finding, surface mosaic, photograph, and 3D topographic model in this application originates exclusively from official NASA archives (Moon, Mars, and Deep Space):
+          Every historical mission narrative, coordinate, scientific finding, surface mosaic, photograph, and 3D spacecraft <code>.glb</code> model originates from official NASA archives (Moon, Mars, and Deep Space). Application code, metadata formatting, and procedural 3D terrain/fallback visuals were developed with Super Intelligence (SI) assistance.
         </p>
         <div id="sources-modal-list" class="sources-modal-list"></div>
       </div>

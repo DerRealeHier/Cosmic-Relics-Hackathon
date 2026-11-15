@@ -2190,4 +2190,34 @@
     0%, 100% { transform: scale(0.95); opacity: 0.9; }
     50% { transform: scale(1.18); opacity: 1; }
   }
+
+  /* Subtle SI / Asset Origin Watermarks */
+  .si-watermark {
+    position: absolute;
+    inset-block-end: 0.65rem;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    padding: 0.24rem 0.65rem;
+    border-radius: var(--r-sm);
+    background: rgba(6, 9, 14, 0.72);
+    border: 1px solid var(--hud-border);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: rgba(226, 232, 240, 0.72);
+    white-space: nowrap;
+    max-inline-size: calc(100vw - 2rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .si-watermark-inspector {
+    inset-block-end: auto;
+    inset-block-start: 0.65rem;
+    inset-inline-start: 0.65rem;
+    transform: none;
+    z-index: 6;
+  }
 }

@@ -729,6 +729,10 @@ const OFFICIAL_NASA_GLBS = {
   newhorizons: { url: 'assets/nasa/models/new-horizons.glb',        size: 1.10, aura: false, centerY: true  }
 };
 
+export function isOfficialNasaGlb(id) {
+  return Boolean(OFFICIAL_NASA_GLBS[id]);
+}
+
 function mat4Identity() {
   const out = new Float32Array(16);
   out[0] = 1; out[5] = 1; out[10] = 1; out[15] = 1;
