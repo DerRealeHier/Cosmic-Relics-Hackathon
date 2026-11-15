@@ -51,45 +51,73 @@ in vec3 vWorldPos;
 in vec2 vTexCoord;
 
 uniform sampler2D uBaseColorTex;
+uniform sampler2D uNormalTex;
+uniform float uHasNormalMap;
 uniform float uOutlineScale;
 uniform vec3 uBeaconPos;
 
 out vec4 fragColor;
 
-// Exact 4-step comic cel-shading ramp from stille_denkm_ler_des_mondes_nasa_space_apps(1).html
-// (#475569 -> #94a3b8 -> #e2e8f0 -> #ffffff)
-vec3 comicGradientRamp(float irr) {
-  if (irr > 0.72) return vec3(1.00, 1.00, 1.00);
-  if (irr > 0.44) return vec3(0.886, 0.910, 0.941);
-  if (irr > 0.18) return vec3(0.580, 0.639, 0.722);
-  return vec3(0.278, 0.333, 0.412);
+// 5-band topographic cel-shading ramp with crisp transitions for craters, ridges & canyons
+vec3 topographicCelRamp(float irr) {
+  float b1 = smoothstep(0.14, 0.17, irr);
+  float b2 = smoothstep(0.32, 0.35, irr);
+  float b3 = smoothstep(0.54, 0.57, irr);
+  float b4 = smoothstep(0.76, 0.79, irr);
+  vec3 c0 = vec3(0.22, 0.27, 0.34);
+  vec3 c1 = vec3(0.45, 0.51, 0.60);
+  vec3 c2 = vec3(0.70, 0.75, 0.82);
+  vec3 c3 = vec3(0.90, 0.92, 0.95);
+  vec3 c4 = vec3(1.00, 1.00, 1.00);
+  return mix(mix(mix(mix(c0, c1, b1), c2, b2), c3, b3), c4, b4);
+}
+
+// Screen-space derivative TBN normal perturbation for embedded glTF normal maps (e.g. Mars MOLA normal map)
+vec3 perturbNormal(vec3 N, vec3 worldPos, vec2 uv) {
+  vec3 mapN = texture(uNormalTex, uv).xyz * 2.0 - 1.0;
+  mapN.xy *= 1.55; // emphasize topographic relief
+  vec3 dp1 = dFdx(worldPos);
+  vec3 dp2 = dFdy(worldPos);
+  vec2 duv1 = dFdx(uv);
+  vec2 duv2 = dFdy(uv);
+  vec3 dp2perp = cross(dp2, N);
+  vec3 dp1perp = cross(N, dp1);
+  vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+  vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+  float invmax = inversesqrt(max(dot(T, T), dot(B, B)) + 1e-8);
+  mat3 TBN = mat3(T * invmax, B * invmax, N);
+  return normalize(TBN * mapN);
 }
 
 void main() {
-  // Pass 1: Crisp comic black ink outline (#050811)
+  // Pass 1: Crisp black ink rim outline (#050811)
   if (uOutlineScale > 1.0001) {
     fragColor = vec4(0.020, 0.031, 0.067, 1.0);
     return;
   }
 
   vec3 N = normalize(vNormal);
-  // Crisp Comic Key Light (7, 12, 6) + Sky Fill (-7, 5, 8)
-  vec3 L1 = normalize(vec3(7.0, 12.0, 6.0));
-  vec3 L2 = normalize(vec3(-7.0, 5.0, 8.0));
+  if (uHasNormalMap > 0.5) {
+    N = perturbNormal(N, vWorldPos, vTexCoord);
+  }
+
+  // Grazing key light to cast crisp topographic shadows across craters & Olympus Mons / Valles Marineris
+  vec3 L1 = normalize(vec3(8.5, 6.5, 5.5));
+  vec3 L2 = normalize(vec3(-6.0, 4.0, 7.0));
 
   float diff1 = max(dot(N, L1), 0.0);
-  float diff2 = max(dot(N, L2), 0.0) * 0.28;
-  float totalIrr = clamp(diff1 * 0.92 + diff2 + 0.12, 0.0, 1.0);
+  float diff2 = max(dot(N, L2), 0.0) * 0.22;
+  float totalIrr = clamp(diff1 * 0.96 + diff2 + 0.08, 0.0, 1.0);
 
   vec3 texColor = texture(uBaseColorTex, vTexCoord).rgb;
-  vec3 toonRamp = comicGradientRamp(totalIrr);
+  vec3 toonRamp = topographicCelRamp(totalIrr);
 
-  // Subtle golden beacon point light glow near the artifact ridge
+  // Subtle beacon point light glow near the active landing site
   float distToBeacon = length(vWorldPos - uBeaconPos);
-  float beaconGlow = clamp(1.0 - distToBeacon / 2.6, 0.0, 1.0);
-  vec3 pointLightAdd = vec3(0.99, 0.88, 0.28) * (beaconGlow * beaconGlow * 0.20);
+  float beaconGlow = clamp(1.0 - distToBeacon / 2.4, 0.0, 1.0);
+  vec3 pointLightAdd = vec3(0.95, 0.85, 0.35) * (beaconGlow * beaconGlow * 0.18);
 
-  vec3 color = texColor * toonRamp * 1.08 + pointLightAdd;
+  vec3 color = texColor * toonRamp * 1.10 + pointLightAdd;
   fragColor = vec4(color, 1.0);
 }
 `;
@@ -731,6 +759,127 @@ const OFFICIAL_NASA_GLBS = {
 
 export function isOfficialNasaGlb(id) {
   return Boolean(OFFICIAL_NASA_GLBS[id]);
+}
+
+const OFFICIAL_NASA_PLANET_GLBS = {
+  moon: 'assets/nasa/models/moon-globe.glb',
+  mars: 'assets/nasa/models/mars-globe.glb'
+};
+
+async function parsePlanetGlbBuffer(arrayBuffer, targetRadius = 5.2) {
+  const view = new DataView(arrayBuffer);
+  if (view.getUint32(0, true) !== 0x46546c67) {
+    throw new Error('Invalid planet GLB header');
+  }
+  const totalLength = view.getUint32(8, true);
+  let offset = 12;
+  let jsonChunk = null;
+  let binChunk = null;
+  while (offset < totalLength) {
+    const chunkLen = view.getUint32(offset, true);
+    const chunkType = view.getUint32(offset + 4, true);
+    offset += 8;
+    if (chunkType === 0x4e4f534a) {
+      jsonChunk = JSON.parse(new TextDecoder('utf-8').decode(new Uint8Array(arrayBuffer, offset, chunkLen)));
+    } else if (chunkType === 0x004e4942) {
+      binChunk = arrayBuffer.slice(offset, offset + chunkLen);
+    }
+    offset += chunkLen;
+  }
+  if (!jsonChunk || !binChunk) throw new Error('Incomplete planet GLB');
+
+  const prim = jsonChunk.meshes?.[0]?.primitives?.[0];
+  if (!prim) throw new Error('Planet GLB missing mesh primitive');
+
+  const readAcc = (accIdx) => {
+    const acc = jsonChunk.accessors[accIdx];
+    const bv = jsonChunk.bufferViews[acc.bufferView];
+    const byteOff = (bv.byteOffset || 0) + (acc.byteOffset || 0);
+    const stride = bv.byteStride || 0;
+    const compCount = acc.type === 'VEC3' ? 3 : acc.type === 'VEC2' ? 2 : 1;
+    const dv = new DataView(binChunk);
+    if (acc.componentType === 5126) {
+      const out = new Float32Array(acc.count * compCount);
+      const step = stride || compCount * 4;
+      for (let i = 0; i < acc.count; i++) {
+        const base = byteOff + i * step;
+        for (let c = 0; c < compCount; c++) out[i * compCount + c] = dv.getFloat32(base + c * 4, true);
+      }
+      return out;
+    }
+    if (acc.componentType === 5125) {
+      const out = new Uint32Array(acc.count);
+      const step = stride || 4;
+      for (let i = 0; i < acc.count; i++) out[i] = dv.getUint32(byteOff + i * step, true);
+      return out;
+    }
+    const out = new Uint16Array(acc.count);
+    const step = stride || 2;
+    for (let i = 0; i < acc.count; i++) out[i] = dv.getUint16(byteOff + i * step, true);
+    return out;
+  };
+
+  const rawPos = readAcc(prim.attributes.POSITION);
+  const normals = readAcc(prim.attributes.NORMAL);
+  const uvs = readAcc(prim.attributes.TEXCOORD_0);
+  const indices = readAcc(prim.indices);
+
+  // Normalize average planetary radius to targetRadius while preserving true topographic relief
+  const vCount = rawPos.length / 3;
+  let sumR = 0;
+  for (let i = 0; i < vCount; i++) {
+    sumR += Math.hypot(rawPos[i * 3], rawPos[i * 3 + 1], rawPos[i * 3 + 2]);
+  }
+  const scale = targetRadius / ((sumR / Math.max(1, vCount)) || 1);
+  const positions = new Float32Array(rawPos.length);
+  const latBins = 64;
+  const lonBins = 128;
+  const rSum = new Float32Array(latBins * lonBins);
+  const rCnt = new Uint16Array(latBins * lonBins);
+
+  for (let i = 0; i < vCount; i++) {
+    const x = rawPos[i * 3] * scale;
+    const y = rawPos[i * 3 + 1] * scale;
+    const z = rawPos[i * 3 + 2] * scale;
+    positions[i * 3] = x;
+    positions[i * 3 + 1] = y;
+    positions[i * 3 + 2] = z;
+    const r = Math.hypot(x, y, z) || targetRadius;
+    const latN = Math.asin(Math.max(-1, Math.min(1, y / r))) / Math.PI + 0.5;
+    const lonN = Math.atan2(x, z) / (2 * Math.PI) + 0.5;
+    const bi = Math.min(latBins - 1, Math.max(0, Math.floor(latN * latBins)));
+    const bj = Math.min(lonBins - 1, Math.max(0, Math.floor(lonN * lonBins))) % lonBins;
+    const cell = bi * lonBins + bj;
+    rSum[cell] += r;
+    rCnt[cell]++;
+  }
+
+  const samplePoint = (ux, uy, uz) => {
+    const latN = Math.asin(Math.max(-1, Math.min(1, uy))) / Math.PI + 0.5;
+    const lonN = Math.atan2(ux, uz) / (2 * Math.PI) + 0.5;
+    const bi = Math.min(latBins - 1, Math.max(0, Math.floor(latN * latBins)));
+    const bj = Math.min(lonBins - 1, Math.max(0, Math.floor(lonN * lonBins))) % lonBins;
+    const cell = bi * lonBins + bj;
+    const r = rCnt[cell] > 0 ? rSum[cell] / rCnt[cell] : targetRadius;
+    return [ux * r, uy * r, uz * r];
+  };
+
+  const decodeImg = async (texIdx) => {
+    if (texIdx == null) return null;
+    const srcIdx = jsonChunk.textures?.[texIdx]?.source;
+    const imgInfo = jsonChunk.images?.[srcIdx];
+    if (!imgInfo || imgInfo.bufferView == null) return null;
+    const bv = jsonChunk.bufferViews[imgInfo.bufferView];
+    const bytes = new Uint8Array(binChunk, bv.byteOffset || 0, bv.byteLength);
+    const blob = new Blob([bytes], { type: imgInfo.mimeType || 'image/png' });
+    return createImageBitmap(blob);
+  };
+
+  const mat = jsonChunk.materials?.[prim.material ?? 0];
+  const diffuseBitmap = await decodeImg(mat?.pbrMetallicRoughness?.baseColorTexture?.index);
+  const normalBitmap = await decodeImg(mat?.normalTexture?.index);
+
+  return { positions, normals, uvs, indices, samplePoint, diffuseBitmap, normalBitmap };
 }
 
 function mat4Identity() {
@@ -2966,6 +3115,8 @@ export class Horizon3DEngine {
       uModel: gl.getUniformLocation(this.planetProg, 'uModel'),
       uNormalMatrix: gl.getUniformLocation(this.planetProg, 'uNormalMatrix'),
       uBaseColorTex: gl.getUniformLocation(this.planetProg, 'uBaseColorTex'),
+      uNormalTex: gl.getUniformLocation(this.planetProg, 'uNormalTex'),
+      uHasNormalMap: gl.getUniformLocation(this.planetProg, 'uHasNormalMap'),
       uOutlineScale: gl.getUniformLocation(this.planetProg, 'uOutlineScale'),
       uBeaconPos: gl.getUniformLocation(this.planetProg, 'uBeaconPos')
     };
@@ -3104,11 +3255,49 @@ export class Horizon3DEngine {
     this.onStatusChange('Comic 3D Horizon Active');
     this.renderFrame(performance.now());
 
-    // Load the active artifact's official NASA .glb first, then preload the rest
+    // Load official NASA Moon & Mars topographic .glb globes in the background, plus active spacecraft .glb
+    this._loadOfficialPlanet('moon');
+    this._loadOfficialPlanet('mars');
     this._officialLoading = this._officialLoading || new Set();
     this._officialLoaded = this._officialLoaded || new Set();
     await this._loadOfficialModel(this.artifactId);
     this._preloadOfficialModels();
+  }
+
+  _uploadTextureBitmap(bitmap) {
+    if (!bitmap || !this.gl) return null;
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+
+  async _loadOfficialPlanet(body) {
+    const url = OFFICIAL_NASA_PLANET_GLBS[body];
+    if (!url || !this.gl) return false;
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const buf = await resp.arrayBuffer();
+      const parsed = await parsePlanetGlbBuffer(buf, 5.2);
+      const mesh = this._createPlanetVao(parsed);
+      mesh.samplePoint = parsed.samplePoint;
+      mesh.diffuseTex = this._uploadTextureBitmap(parsed.diffuseBitmap);
+      mesh.normalTex = this._uploadTextureBitmap(parsed.normalBitmap);
+      mesh.isOfficial = true;
+      this.planetMeshes[body] = mesh;
+      this.renderFrame(performance.now());
+      return true;
+    } catch (err) {
+      console.warn(`Official NASA planet GLB fallback for ${body}:`, err);
+      return false;
+    }
     return true;
   }
 
@@ -3411,11 +3600,14 @@ export class Horizon3DEngine {
 
     // Smoothly morph monument surface anchor from Horizon ridge (g=0) to exact mission (lat, lon) on Moon/Mars (g=1)
     const activeBody = this.realm === 'mars' ? 'mars' : 'moon';
+    const activePlanet = this.planetMeshes[activeBody] || this.planetMeshes.moon;
+    const samplePlanetSurf = (ux, uy, uz) =>
+      activePlanet?.samplePoint ? activePlanet.samplePoint(ux, uy, uz) : evalComicPlanetPoint(ux, uy, uz, 5.2, activeBody);
     const hLen = Math.hypot(0.85, 5.14, 0.55) || 1;
     const hDir = [0.85 / hLen, 5.14 / hLen, 0.55 / hLen];
-    const hSurf = evalComicPlanetPoint(hDir[0], hDir[1], hDir[2], 5.2, activeBody);
+    const hSurf = samplePlanetSurf(hDir[0], hDir[1], hDir[2]);
     const gDir = latLonToDir(this.artifactLat, this.artifactLon);
-    const gSurf = evalComicPlanetPoint(gDir[0], gDir[1], gDir[2], 5.2, activeBody);
+    const gSurf = samplePlanetSurf(gDir[0], gDir[1], gDir[2]);
     const blend = g * g * (3.0 - 2.0 * g);
 
     const posLocal = [
@@ -3444,7 +3636,6 @@ export class Horizon3DEngine {
     // 1. Draw Comic Horizon / Centered Full Sphere ONLY in Moon & Mars modes!
     // In Universe mode, there is NO planet below — the 3D spacecraft flies freely through space!
     if (this.realm !== 'universe') {
-      const activePlanet = this.planetMeshes[activeBody] || this.planetMeshes.moon;
       const planetNormalMat = mat3FromMat4(planetModel);
 
       gl.useProgram(this.planetProg);
@@ -3454,11 +3645,19 @@ export class Horizon3DEngine {
       gl.uniformMatrix3fv(this.planetLocs.uNormalMatrix, false, planetNormalMat);
       gl.uniform3f(this.planetLocs.uBeaconPos, beaconX, beaconY, beaconZ);
 
-      const activeTex = this.realmTextures[this.realm] || this.realmTextures.moon;
+      const activeTex = activePlanet?.diffuseTex || this.realmTextures[this.realm] || this.realmTextures.moon;
       if (activeTex) {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, activeTex);
         gl.uniform1i(this.planetLocs.uBaseColorTex, 0);
+      }
+      if (activePlanet?.normalTex) {
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, activePlanet.normalTex);
+        gl.uniform1i(this.planetLocs.uNormalTex, 1);
+        gl.uniform1f(this.planetLocs.uHasNormalMap, 1.0);
+      } else {
+        gl.uniform1f(this.planetLocs.uHasNormalMap, 0.0);
       }
 
       gl.bindVertexArray(activePlanet.vao);
