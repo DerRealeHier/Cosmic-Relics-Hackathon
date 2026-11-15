@@ -3083,6 +3083,347 @@ function buildDetailedArtifactMesh(id, fallbackType = 'apollo11') {
 }
 
 // ============================================================================
+// HISTORICALLY ACCURATE MISSION CHOREOGRAPHY (NASA GLBs & ARTIFACTS)
+// ============================================================================
+function clamp01(v) {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+function smoothstep01(v) {
+  const t = clamp01(v);
+  return t * t * (3.0 - 2.0 * t);
+}
+
+/**
+ * Returns surface-local motion in the artifact's tangent frame:
+ *   dEast, dNorth: tangent offsets in sphere-radius units (5.2 = planet radius)
+ *   alt: height above surface normal
+ *   yaw, pitch, roll: local attitude angles (radians)
+ */
+function getMissionSurfaceMotion(id, tSec, reducedMotion = false) {
+  if (reducedMotion) {
+    return { dEast: 0, dNorth: 0, alt: 0, yaw: 0.25, pitch: 0, roll: 0 };
+  }
+
+  switch (id) {
+    case 'apollo11': {
+      // Eagle Powered Descent: West Crater boulder dodge -> hover -> Tranquility Base touchdown
+      const cycle = 14.0;
+      const p = (tSec % cycle) / cycle;
+      if (p < 0.28) {
+        // Manual hover-dodge laterally past West Crater boulders
+        const u = smoothstep01(p / 0.28);
+        return {
+          dEast: -0.32 * (1.0 - u),
+          dNorth: 0.12 * (1.0 - u),
+          alt: 0.56 * (1.0 - u) + 0.12 * u,
+          yaw: 0.18 + 0.12 * (1.0 - u),
+          pitch: 0.16 * (1.0 - u),
+          roll: -0.14 * Math.sin(u * Math.PI)
+        };
+      }
+      if (p < 0.40) {
+        // Final vertical descent & engine cutoff ("Contact light!")
+        const u = smoothstep01((p - 0.28) / 0.12);
+        return {
+          dEast: 0,
+          dNorth: 0,
+          alt: 0.12 * (1.0 - u),
+          yaw: 0.18,
+          pitch: 0,
+          roll: 0
+        };
+      }
+      if (p < 0.90) {
+        // Resting at Tranquility Base ("The Eagle has landed")
+        return { dEast: 0, dNorth: 0, alt: 0, yaw: 0.18, pitch: 0, roll: 0 };
+      }
+      // Smooth loop reset back to approach
+      const u = smoothstep01((p - 0.90) / 0.10);
+      return {
+        dEast: -0.32 * u,
+        dNorth: 0.12 * u,
+        alt: 0.56 * u,
+        yaw: 0.18 + 0.12 * u,
+        pitch: 0.16 * u,
+        roll: 0
+      };
+    }
+
+    case 'viking1': {
+      // Chryse Planitia retro-descent followed by stepped panoramic camera sweep
+      const cycle = 12.0;
+      const p = (tSec % cycle) / cycle;
+      if (p < 0.18) {
+        const u = smoothstep01(p / 0.18);
+        return {
+          dEast: 0,
+          dNorth: 0,
+          alt: 0.42 * (1.0 - u),
+          yaw: -0.25,
+          pitch: 0.04 * (1.0 - u),
+          roll: 0
+        };
+      }
+      if (p < 0.88) {
+        // Stepped facsimile panoramic scan on Chryse Planitia
+        const u = (p - 0.18) / 0.70;
+        const sweep = Math.sin(u * Math.PI * 2.0) * 0.28 + Math.sin(u * Math.PI * 10.0) * 0.015;
+        return { dEast: 0, dNorth: 0, alt: 0, yaw: sweep, pitch: 0, roll: 0 };
+      }
+      const u = smoothstep01((p - 0.88) / 0.12);
+      return {
+        dEast: 0,
+        dNorth: 0,
+        alt: 0.42 * u,
+        yaw: -0.25 * u,
+        pitch: 0.04 * u,
+        roll: 0
+      };
+    }
+
+    case 'opportunity':
+    case 'sojourner': {
+      // Meridiani Planum / Ares Vallis rover traverse with periodic Pancam crater-rim pauses
+      const cycle = 16.0;
+      const p = (tSec % cycle) / cycle;
+      // Pause between 0.42..0.54 and 0.90..1.00 to scan horizon/rocks
+      let drivePhase;
+      let scanning = 0;
+      if (p < 0.42) {
+        drivePhase = (p / 0.42) * 0.5;
+      } else if (p < 0.54) {
+        drivePhase = 0.5;
+        scanning = Math.sin(((p - 0.42) / 0.12) * Math.PI * 2.0) * 0.22;
+      } else if (p < 0.90) {
+        drivePhase = 0.5 + ((p - 0.54) / 0.36) * 0.5;
+      } else {
+        drivePhase = 1.0;
+        scanning = Math.sin(((p - 0.90) / 0.10) * Math.PI * 2.0) * 0.22;
+      }
+      const theta = drivePhase * Math.PI * 2.0;
+      const radius = id === 'opportunity' ? 0.22 : 0.16;
+      const dEast = Math.sin(theta) * radius;
+      const dNorth = (1.0 - Math.cos(theta)) * radius * 0.65 - radius * 0.65;
+      const heading = Math.atan2(Math.cos(theta) * radius, Math.sin(theta) * radius * 0.65);
+      const isDriving = scanning === 0;
+      const ripplePitch = isDriving ? Math.sin(tSec * 3.8) * 0.05 : 0;
+      const rippleRoll = isDriving ? Math.cos(tSec * 2.9) * 0.04 : 0;
+      return {
+        dEast,
+        dNorth,
+        alt: 0,
+        yaw: heading + scanning,
+        pitch: ripplePitch,
+        roll: rippleRoll
+      };
+    }
+
+    case 'insight': {
+      // Stationary Elysium Planitia geophysical station detecting periodic marsquakes
+      const cycle = 7.0;
+      const p = (tSec % cycle) / cycle;
+      let tremorPitch = 0;
+      let tremorRoll = 0;
+      if (p > 0.35 && p < 0.62) {
+        const q = (p - 0.35) / 0.27;
+        const env = Math.sin(q * Math.PI) * Math.exp(-q * 2.4);
+        tremorPitch = Math.sin(tSec * 36.0) * 0.045 * env;
+        tremorRoll = Math.cos(tSec * 42.0) * 0.045 * env;
+      }
+      return { dEast: 0, dNorth: 0, alt: 0, yaw: 0.18, pitch: tremorPitch, roll: tremorRoll };
+    }
+
+    case 'ingenuity': {
+      // Jezero Crater powered flight sortie: spool-up -> liftoff -> scout -> flare -> touchdown
+      const cycle = 12.0;
+      const p = (tSec % cycle) / cycle;
+      if (p < 0.10) {
+        // Rotor spool-up on Wright Brothers Field
+        const vib = Math.sin(tSec * 48.0) * 0.025 * (p / 0.10);
+        return { dEast: 0, dNorth: 0, alt: 0, yaw: 0.1, pitch: vib, roll: vib };
+      }
+      if (p < 0.22) {
+        // Vertical climb to hover altitude
+        const u = smoothstep01((p - 0.10) / 0.12);
+        return {
+          dEast: 0,
+          dNorth: 0,
+          alt: 0.52 * u,
+          yaw: 0.1 + 0.35 * u,
+          pitch: 0,
+          roll: 0
+        };
+      }
+      if (p < 0.56) {
+        // Forward scouting flight across Jezero Crater
+        const u = smoothstep01((p - 0.22) / 0.34);
+        const arc = Math.sin(u * Math.PI);
+        return {
+          dEast: 0.34 * u,
+          dNorth: 0.14 * arc,
+          alt: 0.52 + 0.06 * Math.sin(tSec * 4.5),
+          yaw: 0.45 + 0.45 * u,
+          pitch: 0.18 * arc,
+          roll: -0.14 * arc
+        };
+      }
+      if (p < 0.78) {
+        // Return leg & flare over landing pad
+        const u = smoothstep01((p - 0.56) / 0.22);
+        const arc = Math.sin(u * Math.PI);
+        return {
+          dEast: 0.34 * (1.0 - u),
+          dNorth: -0.08 * arc,
+          alt: 0.52 + 0.04 * Math.sin(tSec * 4.2),
+          yaw: 0.90 + 2.24 * u,
+          pitch: -0.16 * arc,
+          roll: 0.12 * arc
+        };
+      }
+      if (p < 0.90) {
+        // Controlled vertical touchdown
+        const u = smoothstep01((p - 0.78) / 0.12);
+        return {
+          dEast: 0,
+          dNorth: 0,
+          alt: 0.52 * (1.0 - u),
+          yaw: 3.14 * (1.0 - u) + 0.1 * u,
+          pitch: 0,
+          roll: 0
+        };
+      }
+      // Surface solar recharge
+      return { dEast: 0, dNorth: 0, alt: 0, yaw: 0.1, pitch: 0, roll: 0 };
+    }
+
+    default:
+      // Gentle showcase sway for non-GLB legacy monuments
+      return {
+        dEast: 0,
+        dNorth: 0,
+        alt: 0,
+        yaw: Math.sin(tSec * 0.8) * 0.35,
+        pitch: 0,
+        roll: 0
+      };
+  }
+}
+
+/**
+ * Returns deep-space 3D trajectory & attitude for Universe realm spacecraft.
+ */
+function getMissionSpaceMotion(id, tSec, reducedMotion = false, baseRotX = 0, baseRotY = 0) {
+  if (reducedMotion) {
+    return { mx: 0, my: 0.1, mz: 0.65, rx: 0.18 + baseRotX, ry: baseRotY, rz: 0 };
+  }
+
+  switch (id) {
+    case 'pioneer10': {
+      // Spin-stabilized (~4.8 RPM scaled visually) hyperbolic Jupiter gravity-assist arc
+      const t = tSec * 0.55;
+      const mx = Math.sin(t) * 1.15;
+      const my = 0.08 + Math.sin(t * 0.9) * 0.24;
+      const mz = 0.62 + Math.cos(t) * 0.48;
+      return {
+        mx,
+        my,
+        mz,
+        rx: 0.22 + baseRotX,
+        ry: baseRotY - Math.sin(t) * 0.35,
+        rz: tSec * 1.15 // Continuous spin stabilization around dish axis
+      };
+    }
+
+    case 'voyager1': {
+      // 3-axis stabilized interstellar cruise (dish steady toward Earth) + periodic magnetometer roll
+      const t = tSec * 0.38;
+      const mx = Math.sin(t) * 0.75;
+      const my = 0.12 + Math.sin(t * 1.4) * 0.14;
+      const mz = 0.68 + Math.cos(t * 0.8) * 0.25;
+      const rollCycle = (tSec % 14.0) / 14.0;
+      const magRoll = rollCycle > 0.68 ? smoothstep01((rollCycle - 0.68) / 0.32) * Math.PI * 2.0 : 0;
+      return {
+        mx,
+        my,
+        mz,
+        rx: 0.14 + baseRotX,
+        ry: baseRotY + Math.sin(t * 0.5) * 0.18,
+        rz: magRoll
+      };
+    }
+
+    case 'voyager2': {
+      // Grand Tour 4-planet gravity-assist trajectory (Jupiter -> Saturn -> Uranus -> Neptune)
+      const cycle = 16.0;
+      const p = (tSec % cycle) / cycle;
+      const theta = p * Math.PI * 2.0;
+      const mx = Math.sin(theta) * 1.18;
+      const my = 0.10 + Math.sin(theta * 2.0) * 0.32;
+      const mz = 0.62 + Math.cos(theta * 2.0) * 0.38;
+      const slingshotBank = -0.24 * Math.cos(theta * 2.0);
+      return {
+        mx,
+        my,
+        mz,
+        rx: 0.18 + Math.sin(theta * 2.0) * 0.15 + baseRotX,
+        ry: baseRotY + Math.cos(theta) * 0.55,
+        rz: slingshotBank
+      };
+    }
+
+    case 'huygens': {
+      // Cassini-Huygens Saturn ring-plane orbit & Titan probe attitude orienting
+      const t = tSec * 0.48;
+      const mx = Math.cos(t) * 1.05;
+      const my = 0.08 + Math.sin(t) * 0.28;
+      const mz = 0.62 + Math.sin(t) * 0.42;
+      return {
+        mx,
+        my,
+        mz,
+        rx: 0.24 + Math.cos(t) * 0.14 + baseRotX,
+        ry: baseRotY + t * 0.22,
+        rz: -0.18 * Math.sin(t)
+      };
+    }
+
+    case 'newhorizons': {
+      // High-speed Pluto hyperbolic flyby slew -> spin-stabilized Kuiper Belt cruise
+      const cycle = 12.0;
+      const p = (tSec % cycle) / cycle;
+      const pass = p * 2.0 - 1.0; // -1..+1
+      const mx = Math.sin(pass * Math.PI) * 1.25;
+      const my = 0.12 + Math.cos(pass * Math.PI) * 0.22;
+      const mz = 0.65 - Math.abs(pass) * 0.35;
+      // Rapid closest-approach LORRI/Ralph instrument slew near p = 0.5
+      const slew = Math.exp(-Math.pow((p - 0.5) / 0.16, 2.0));
+      const spin = p > 0.65 ? (p - 0.65) * 8.0 : 0;
+      return {
+        mx,
+        my,
+        mz,
+        rx: 0.16 + slew * 0.48 + baseRotX,
+        ry: baseRotY + pass * 0.75,
+        rz: spin - slew * 0.22
+      };
+    }
+
+    default: {
+      const t = tSec * 0.65;
+      return {
+        mx: Math.sin(t) * 1.15,
+        my: 0.10 + Math.sin(t * 2.0) * 0.36,
+        mz: 0.65 + Math.cos(t * 1.3) * 0.45,
+        rx: 0.18 + Math.sin(t * 1.5) * 0.18 + baseRotX,
+        ry: baseRotY + Math.cos(t * 0.85) * 0.65,
+        rz: -0.16 * Math.cos(t)
+      };
+    }
+  }
+}
+
+// ============================================================================
 // MAIN WEBGL2 COMIC HORIZON & MONUMENT ENGINE
 // ============================================================================
 export class Horizon3DEngine {
@@ -3153,6 +3494,7 @@ export class Horizon3DEngine {
     this.monumentGeoms = {};
     this.customGlbGeom = null;
     this.rafId = 0;
+    this.missionAnimStart = performance.now();
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (this.gl) {
@@ -3472,6 +3814,9 @@ export class Horizon3DEngine {
 
   setArtifact({ id, artifactType, horizonAngle, lat, lon }) {
     if (id) {
+      if (this.artifactId !== id) {
+        this.missionAnimStart = performance.now();
+      }
       this.artifactId = id;
       if (OFFICIAL_NASA_GLBS[id]) {
         this._loadOfficialModel(id);
@@ -3734,20 +4079,51 @@ export class Horizon3DEngine {
       let mz = ridgeZ;
       let monModel;
 
+      const tSec = Math.max(0, (now - (this.missionAnimStart || 0)) * 0.001);
+
       if (this.realm === 'universe') {
-        const t = this.reducedMotion ? 0.5 : now * 0.00065;
-        mx = 0.0 + Math.sin(t) * 1.15;
-        my = 0.10 + Math.sin(t * 2.0) * 0.36;
-        mz = 0.65 + Math.cos(t * 1.3) * 0.45;
-        const rx = 0.18 + Math.sin(t * 1.5) * 0.18 + this.currentRotX;
-        const ry = this.currentRotY + Math.cos(t * 0.85) * 0.65;
-        const rz = -0.16 * Math.cos(t); // Dynamic banking into turns!
+        const s = getMissionSpaceMotion(this.artifactId, tSec, this.reducedMotion, this.currentRotX, this.currentRotY);
+        mx = s.mx;
+        my = s.my;
+        mz = s.mz;
         const renderScale = this.monumentScale * 0.92;
-        monModel = mat4FromTranslationRotationScale(mx, my, mz, rx, ry, rz, renderScale);
+        monModel = mat4FromTranslationRotationScale(mx, my, mz, s.rx, s.ry, s.rz, renderScale);
       } else {
-        const localSpin = this.reducedMotion ? 0.25 : Math.sin(now * 0.0008) * 0.35;
+        const m = getMissionSurfaceMotion(this.artifactId, tSec, this.reducedMotion);
+        let animDir = gDir;
+        let animSurf = gSurf;
+        if (m.dEast !== 0 || m.dNorth !== 0) {
+          // Tangent basis around gDir on unit sphere
+          const refY = Math.abs(gDir[1]) > 0.92 ? [1, 0, 0] : [0, 1, 0];
+          let ex = refY[1] * gDir[2] - refY[2] * gDir[1];
+          let ey = refY[2] * gDir[0] - refY[0] * gDir[2];
+          let ez = refY[0] * gDir[1] - refY[1] * gDir[0];
+          const eLen = Math.hypot(ex, ey, ez) || 1;
+          ex /= eLen; ey /= eLen; ez /= eLen;
+          const nx = gDir[1] * ez - gDir[2] * ey;
+          const ny = gDir[2] * ex - gDir[0] * ez;
+          const nz = gDir[0] * ey - gDir[1] * ex;
+          const dx = gDir[0] + (ex * m.dEast + nx * m.dNorth) / 5.2;
+          const dy = gDir[1] + (ey * m.dEast + ny * m.dNorth) / 5.2;
+          const dz = gDir[2] + (ez * m.dEast + nz * m.dNorth) / 5.2;
+          const dLen = Math.hypot(dx, dy, dz) || 1;
+          animDir = [dx / dLen, dy / dLen, dz / dLen];
+          animSurf = samplePlanetSurf(animDir[0], animDir[1], animDir[2]);
+        }
+        const animPosLocal = [
+          animSurf[0] + animDir[0] * (m.alt - 0.03),
+          animSurf[1] + animDir[1] * (m.alt - 0.03),
+          animSurf[2] + animDir[2] * (m.alt - 0.03)
+        ];
+        mx = planetModel[0] * animPosLocal[0] + planetModel[4] * animPosLocal[1] + planetModel[8] * animPosLocal[2] + planetModel[12];
+        my = planetModel[1] * animPosLocal[0] + planetModel[5] * animPosLocal[1] + planetModel[9] * animPosLocal[2] + planetModel[13];
+        mz = planetModel[2] * animPosLocal[0] + planetModel[6] * animPosLocal[1] + planetModel[10] * animPosLocal[2] + planetModel[14];
+
         const renderScale = this.monumentScale * planetScale * (0.98 + 0.18 * g);
-        const localMon = mat4FromPointNormal(posLocal, upLocal, localSpin, renderScale / (planetScale || 1));
+        let localMon = mat4FromPointNormal(animPosLocal, animDir, m.yaw, renderScale / (planetScale || 1));
+        if (m.pitch !== 0 || m.roll !== 0) {
+          localMon = mat4Multiply(localMon, mat4FromTranslationRotationScale(0, 0, 0, m.pitch, 0, m.roll, 1));
+        }
         monModel = mat4Multiply(planetModel, localMon);
       }
       const monNormalMat = mat3FromMat4(monModel);
